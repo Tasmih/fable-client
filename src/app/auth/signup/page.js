@@ -1,5 +1,5 @@
 "use client";
-
+import { toast } from "react-toastify";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,8 @@ import {
   BookOpen,
   PenTool,
   ChevronDown,
+  XCircle,
+  CheckCircle,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { signUp, signIn } from "@/lib/auth-client";
@@ -43,20 +45,24 @@ export default function SignUpPage() {
     setError("");
     setSuccess("");
 
-    // check if passwords match
     if (password.length < 6) {
-  setError("Password must be at least 6 characters.");
-  return;
-}
+      setError("Password must be at least 6 characters.");
+      toast.error("Password must be at least 6 characters.", {
+        icon: <XCircle className="w-4 h-4 text-red-500" />,
+      });
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
+      toast.error("Passwords do not match.", {
+        icon: <XCircle className="w-4 h-4 text-red-500" />,
+      });
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // role based redirect: user -> home, writer -> writer dashboard
       const targetCallback = role === "writer" ? "/dashboard/writer" : "/";
 
       const { data, error: authError } = await signUp.email({
@@ -69,20 +75,27 @@ export default function SignUpPage() {
 
       if (authError) {
         setError(authError.message || "Something went wrong during signup.");
+        toast.error(authError.message || "Something went wrong during signup.", {
+          icon: <XCircle className="w-4 h-4 text-red-500" />,
+        });
       } else {
-        setSuccess("Account created successfully!Welcome. Redirecting...");
+        setSuccess("Account created successfully! Welcome. Redirecting...");
+        toast.success("Account created successfully! Welcome.", {
+          icon: <CheckCircle className="w-4 h-4 text-green-500" />,
+        });
         setName("");
         setEmail("");
         setPassword("");
         setConfirmPassword("");
-
-        // fallback client-side redirect
         setTimeout(() => {
           router.push(targetCallback);
         }, 1500);
       }
     } catch (err) {
       setError("An unexpected network error occurred.");
+      toast.error("An unexpected network error occurred.", {
+        icon: <XCircle className="w-4 h-4 text-red-500" />,
+      });
     } finally {
       setIsLoading(false);
     }
