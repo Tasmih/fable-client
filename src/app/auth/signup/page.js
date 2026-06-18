@@ -49,8 +49,11 @@ export default function SignUpPage() {
 
   // dynamic callback url based on selected role
   const getCallbackURL = () => {
-    return role === "writer" ? "/dashboard/writer" : "/dashboard/user";
+    return role === "writer" ? "/" : "/";
   };
+  // const getCallbackURL = () => {
+  //   return role === "writer" ? "/dashboard/writer" : "/dashboard/user";
+  // };
 
   // email sign-up handler
   const handleSignup = async (e) => {

@@ -21,7 +21,9 @@ import { useSession, signOut } from "@/lib/auth-client";
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: session, isPending } = useSession();
+    console.log("session data in Navbar:", "is pending:",isPending);
   const user = session?.user;
+
   const pathname = usePathname();
   const router = useRouter();
   const mobileRef = useRef(null);

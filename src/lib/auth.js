@@ -23,7 +23,7 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       role: {
-        type: "string",
+        default: "reader",
         required: false,
         defaultValue: "user",
         input: true,
