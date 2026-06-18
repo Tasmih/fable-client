@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -33,7 +32,7 @@ export default function SignInPage() {
       const { data, error: authError } = await signIn.email({
         email,
         password,
-        callbackURL: "/",
+        callbackURL: "/", // auth-client auto manages role redirect if backend setup supports it
       });
 
       if (authError) {
@@ -48,10 +47,12 @@ export default function SignInPage() {
         });
         setEmail("");
         setPassword("");
+        
+        // Refresh router state before push to sync Next.js middleware session
         setTimeout(() => {
-          router.push("/");
           router.refresh();
-        }, 1500);
+          router.push("/");
+        }, 1200);
       }
     } catch (err) {
       setError("An unexpected network error occurred.");
@@ -67,10 +68,11 @@ export default function SignInPage() {
     try {
       await signIn.social({
         provider: "google",
-        callbackURL: "/",
+         callbackURL: "/auth/select-role",
       });
     } catch (err) {
       setError("Failed to initialize Google sign in.");
+      toast.error("Failed to initialize Google sign in.");
     }
   };
 
@@ -94,12 +96,8 @@ export default function SignInPage() {
             Welcome Back
             <span className="h-1.5 w-1.5 rounded-full bg-[#AE7C54]" />
           </div>
-          <h1 className="text-2xl font-bold leading-tight text-[#1C1C1C]">
-            Sign in to Fable
-          </h1>
-          <p className="text-xs text-[#6B6B6B] mt-1">
-            Continue your reading journey
-          </p>
+          <h1 className="text-2xl font-bold leading-tight text-[#1C1C1C]">Sign in to Fable</h1>
+          <p className="text-xs text-[#6B6B6B] mt-1">Continue your reading journey</p>
         </motion.div>
 
         <motion.div
@@ -112,9 +110,7 @@ export default function SignInPage() {
           <form onSubmit={handleSignin} className="flex flex-col gap-5">
             <div className="flex flex-col gap-4">
               <div>
-                <label className="text-xs uppercase tracking-widest font-semibold text-[#6B6B6B]">
-                  Email Address
-                </label>
+                <label className="text-xs uppercase tracking-widest font-semibold text-[#6B6B6B]">Email Address</label>
                 <div className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-[#2F6F6D]/35 rounded bg-[#F7F5F2]/50 mt-1">
                   <AtSign className="h-4 w-4 text-[#2F6F6D]" />
                   <input
@@ -129,9 +125,7 @@ export default function SignInPage() {
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-widest font-semibold text-[#6B6B6B]">
-                  Password
-                </label>
+                <label className="text-xs uppercase tracking-widest font-semibold text-[#6B6B6B]">Password</label>
                 <div className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-[#2F6F6D]/35 rounded bg-[#F7F5F2]/50 mt-1">
                   <Lock className="h-4 w-4 text-[#2F6F6D]" />
                   <input
@@ -148,31 +142,15 @@ export default function SignInPage() {
                 </div>
               </div>
 
-              {error && (
-                <div className="p-3 text-xs font-medium rounded border border-dashed border-red-200 bg-red-50 text-red-600 mt-1">
-                  <span className="font-bold">Error:</span> {error}
-                </div>
-              )}
-
-              {success && (
-                <div className="p-3 text-xs font-medium rounded border border-dashed border-emerald-200 bg-emerald-50 text-emerald-700 mt-1">
-                  <span className="font-bold">Success:</span> {success}
-                </div>
-              )}
+              {error && <div className="p-3 text-xs font-medium rounded border border-dashed border-red-200 bg-red-50 text-red-600 mt-1"><strong>Error:</strong> {error}</div>}
+              {success && <div className="p-3 text-xs font-medium rounded border border-dashed border-emerald-200 bg-emerald-50 text-emerald-700 mt-1"><strong>Success:</strong> {success}</div>}
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 bg-[#2F6F6D] text-white font-semibold py-2.5 rounded hover:bg-[#235351] transition shadow-md shadow-[#2F6F6D]/10 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 bg-[#2F6F6D] text-white font-semibold py-2.5 rounded hover:bg-[#235351] transition shadow-md mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isLoading ? (
-                  <span className="text-sm">Processing...</span>
-                ) : (
-                  <>
-                    <BookOpen className="h-4 w-4" />
-                    <span>Sign In</span>
-                  </>
-                )}
+                {isLoading ? <span className="text-sm">Processing...</span> : <span>Sign In</span>}
               </button>
             </div>
           </form>
@@ -198,10 +176,8 @@ export default function SignInPage() {
           </button>
 
           <p className="text-center text-xs text-[#6B6B6B] mt-4">
-            Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="text-[#2F6F6D] font-semibold hover:underline">
-              Sign up
-            </Link>
+            Don't have an account?{" "}
+            <Link href="/auth/signup" className="text-[#2F6F6D] font-semibold hover:underline">Sign up</Link>
           </p>
         </motion.div>
       </div>

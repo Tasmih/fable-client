@@ -50,27 +50,26 @@ export default function Navbar() {
     return "/dashboard/user";
   };
 
-  const handleLogout = async () => {
+ const handleLogout = async () => {
     try {
-      await signOut();
-      toast.success("Logged out successfully", {
-        icon: <CheckCircle className="w-4 h-4 text-green-500" />,
-      });
-      setMobileOpen(false);
-      router.push("/");
-      router.refresh();
+        await signOut();
+        toast.success("Logged out successfully", {
+            icon: <CheckCircle className="w-4 h-4 text-green-500" />,
+        });
+        setMobileOpen(false);
+        router.push("/");
+        router.refresh();
     } catch (err) {
-      toast.error("Logout failed. Please try again.", {
-        icon: <XCircle className="w-4 h-4 text-red-500" />,
-      });
+        toast.error("Logout failed. Please try again.", {
+            icon: <XCircle className="w-4 h-4 text-red-500" />,
+        });
     }
-  };
-
+};
   return (
     <nav className="sticky top-0 z-50 w-full border-[#AE7C54]/10 bg-[#0f6f7a]/10 backdrop-blur-md">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
 
-        {/* left - logo */}
+        {/* LEFT - Logo */}
         <Link href="/" className="flex items-center gap-2">
           <div className="w-9 h-9 bg-[#AE7C54] rounded-lg flex items-center justify-center">
             <BookOpen className="text-white w-5 h-5" />
@@ -80,10 +79,10 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* right - nav + divider + auth */}
+        {/* RIGHT - Nav + Divider + Auth */}
         <div className="hidden md:flex items-center gap-6">
 
-          {/* nav links */}
+          {/* Nav Links */}
           <div className="flex gap-10 text-sm font-medium">
             <Link href="/" className="relative group text-[#f6f1ea]">
               <Home size={16} className="inline mr-1" />
@@ -106,10 +105,10 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* vertical divider */}
+          {/* Vertical Divider */}
           <div className="h-6 w-px bg-[#AE7C54]/40" />
 
-          {/* auth */}
+          {/* Auth */}
           <div className="flex items-center gap-3">
             {isPending ? (
               <div className="h-9 w-24 rounded-lg bg-[#AE7C54]/20 animate-pulse" />
@@ -129,21 +128,9 @@ export default function Navbar() {
                 </Link>
               </>
             ) : (
-              <div className="flex items-center gap-4">
-                <span className="text-[#f6f1ea] text-sm font-medium">
-                  Hi, {user.name ? user.name.split(" ")[0] : "User"}
-                </span>
-                <div className="w-9 h-9 rounded-full bg-[#AE7C54] flex items-center justify-center text-white font-semibold text-sm shadow-md overflow-hidden">
-                  {user.image ? (
-                    <img 
-                      src={user.image} 
-                      alt={user.name || "User Avatar"} 
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer" 
-                    />
-                  ) : (
-                    user.name?.[0]?.toUpperCase() || <User size={16} />
-                  )}
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#AE7C54] flex items-center justify-center text-white font-semibold text-sm">
+                  {user.name?.[0]?.toUpperCase() || <User size={16} />}
                 </div>
                 <button
                   onClick={handleLogout}
@@ -157,7 +144,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* mobile button */}
+        {/* Mobile Button */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="md:hidden text-[#f6f1ea]"
@@ -167,7 +154,7 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* mobile menu */}
+      {/* MOBILE MENU */}
       {mobileOpen && (
         <div
           ref={mobileRef}
@@ -205,32 +192,12 @@ export default function Navbar() {
           )}
 
           {user && (
-            <div className="flex flex-col gap-3 pt-3 border-t border-[#AE7C54]/20">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#AE7C54] flex items-center justify-center text-white font-semibold text-xs overflow-hidden">
-                  {user.image ? (
-                    <img 
-                      src={user.image} 
-                      alt={user.name || "User Avatar"} 
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer" 
-                    />
-                  ) : (
-                    user.name?.[0]?.toUpperCase() || <User size={14} />
-                  )}
-                </div>
-                <span className="text-[#f6f1ea] text-sm font-medium">
-                  Hi, {user.name || "User"}
-                </span>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 text-red-300 text-sm hover:text-red-200 transition w-fit"
-              >
-                <LogOut size={14} /> Logout
-              </button>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-red-300 text-sm hover:text-red-200 transition"
+            >
+              <LogOut size={14} /> Logout
+            </button>
           )}
         </div>
       )}
