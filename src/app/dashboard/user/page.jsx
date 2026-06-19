@@ -398,7 +398,12 @@ export default function UserDashboardPage() {
                       </td>
                     </tr>
                   ))}
-             
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
     </main>
   );
 }
