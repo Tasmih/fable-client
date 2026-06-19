@@ -389,7 +389,12 @@ export default function UserDashboardPage() {
                       </td>
 
                       <td className="py-4 pr-4">
-                       
+                        <Link
+                          href={`/ebooks/${item.ebookId}`}
+                          className="rounded-lg bg-[#053c41] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#0f6f7a]"
+                        >
+                          Read
+                        </Link>
                       </td>
                     </tr>
                   ))}
