@@ -384,9 +384,7 @@ export default function UserDashboardPage() {
                         </span>
                       </td>
 
-                      <td className="py-4 pr-4">
-                        {formatDate(item.purchaseDate || item.createdAt)}
-                      </td>
+                    
 
                       <td className="py-4 pr-4">
                         <Link
