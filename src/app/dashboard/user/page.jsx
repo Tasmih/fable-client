@@ -378,7 +378,12 @@ export default function UserDashboardPage() {
                         ${Number(item.amount || 0).toFixed(2)}
                       </td>
 
-                     
+                      <td className="py-4 pr-4">
+                        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                          {item.status || "paid"}
+                        </span>
+                      </td>
+
                       <td className="py-4 pr-4">
                         {formatDate(item.purchaseDate || item.createdAt)}
                       </td>
