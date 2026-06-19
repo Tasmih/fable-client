@@ -36,13 +36,13 @@ export default function DashboardSidebar({ user }) {
     writer: [
       { name: "Dashboard", icon: SquareChartBar, href: "/dashboard/writer" },
       { name: "My Books", icon: BookOpen, href: "/dashboard/writer/books" },
-      { name: "Add Ebook", icon: Plus, href: "/dashboard/writer/add" },
+      { name: "Add Ebook", icon: Plus, href: "/dashboard/writer/add-ebook" },
       { name: "Sales History", icon: CreditCard, href: "/dashboard/writer/sales" },
     ],
     admin: [
       { name: "Dashboard", icon: House, href: "/dashboard/admin" },
       { name: "Users", icon: Persons, href: "/dashboard/admin/users" },
-      { name: "Ebooks", icon: Database, href: "/dashboard/admin/ebooks" },
+      { name: "Ebooks", icon: BookOpen, href: "/ebooks" },
       { name: "Transactions", icon: CreditCard, href: "/dashboard/admin/transactions" },
       { name: "Analytics", icon: SquareChartBar, href: "/dashboard/admin/analytics" },
     ],

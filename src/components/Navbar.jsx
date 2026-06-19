@@ -19,15 +19,35 @@ import {
 import { useSession, signOut } from "@/lib/auth-client";
 
 export default function Navbar() {
+  const [mounted, setMounted] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  
   const { data: session, isPending } = useSession();
-    console.log("session data in Navbar:", "is pending:",isPending);
   const user = session?.user;
 
   const pathname = usePathname();
   const router = useRouter();
   const mobileRef = useRef(null);
 
+  // 1. Safe Client Mounting Tracker
+  useEffect(() => {
+    setMounted(true);
+
+    // 2. Window Scroll Event Listener
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // 3. Handle Outside Clicks for Mobile Menu
   useEffect(() => {
     function handleClickOutside(e) {
       if (mobileRef.current && !mobileRef.current.contains(e.target)) {
@@ -38,6 +58,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // 4. Close Mobile Menu on Route Change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
@@ -52,23 +73,31 @@ export default function Navbar() {
     return "/dashboard/user";
   };
 
- const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
-        await signOut();
-        toast.success("Logged out successfully", {
-            icon: <CheckCircle className="w-4 h-4 text-green-500" />,
-        });
-        setMobileOpen(false);
-        router.push("/");
-        router.refresh();
+      await signOut();
+      toast.success("Logged out successfully", {
+        icon: <CheckCircle className="w-4 h-4 text-green-500" />,
+      });
+      setMobileOpen(false);
+      router.push("/");
+      router.refresh();
     } catch (err) {
-        toast.error("Logout failed. Please try again.", {
-            icon: <XCircle className="w-4 h-4 text-red-500" />,
-        });
+      toast.error("Logout failed. Please try again.", {
+        icon: <XCircle className="w-4 h-4 text-red-500" />,
+      });
     }
-};
+  };
+
+  // 🎯 Dynamic Hydration Mismatch Guard
+  const navbarClass = !mounted 
+    ? "sticky top-0 z-50 w-full border-b border-[#AE7C54]/10 bg-[#053c41]/95" 
+    : `sticky top-0 z-50 w-full border-b border-[#AE7C54]/10 transition-all duration-300 ${
+        isScrolled ? "bg-[#053c41]/95 shadow-md" : "bg-[#0f6f7a]/10 backdrop-blur-md"
+      }`;
+
   return (
-    <nav className="sticky top-0 z-50 w-full border-[#AE7C54]/10 bg-[#0f6f7a]/10 backdrop-blur-md">
+    <nav className={navbarClass}>
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
 
         {/* LEFT - Logo */}
@@ -92,10 +121,10 @@ export default function Navbar() {
               <span className={`absolute left-0 -bottom-1 h-[2px] bg-[#AE7C54] transition-all duration-300 ${isActive("/") ? "w-full" : "w-0 group-hover:w-full"}`} />
             </Link>
 
-            <Link href="/browse" className="relative group text-[#f6f1ea]">
+            <Link href="/ebooks" className="relative group text-[#f6f1ea]">
               <Search size={16} className="inline mr-1" />
               Browse Ebooks
-              <span className={`absolute left-0 -bottom-1 h-[2px] bg-[#AE7C54] transition-all duration-300 ${isActive("/browse") ? "w-full" : "w-0 group-hover:w-full"}`} />
+              <span className={`absolute left-0 -bottom-1 h-[2px] bg-[#AE7C54] transition-all duration-300 ${isActive("/ebooks") ? "w-full" : "w-0 group-hover:w-full"}`} />
             </Link>
 
             {user && (
@@ -162,16 +191,16 @@ export default function Navbar() {
           ref={mobileRef}
           className="md:hidden bg-[#0f6f7a] border-t border-[#AE7C54]/30 px-6 py-4 flex flex-col gap-4"
         >
-          <Link onClick={() => setMobileOpen(false)} href="/" className={`flex gap-2 items-center text-sm ${isActive("/") ? "text-[#AE7C54] font-semibold" : "text-[#f6f1ea]"}`}>
+          <Link href="/" className={`flex gap-2 items-center text-sm ${isActive("/") ? "text-[#AE7C54] font-semibold" : "text-[#f6f1ea]"}`}>
             <Home size={16} /> Home
           </Link>
 
-          <Link onClick={() => setMobileOpen(false)} href="/browse" className={`flex gap-2 items-center text-sm ${isActive("/browse") ? "text-[#AE7C54] font-semibold" : "text-[#f6f1ea]"}`}>
+          <Link href="/ebooks" className={`flex gap-2 items-center text-sm ${isActive("/ebooks") ? "text-[#AE7C54] font-semibold" : "text-[#f6f1ea]"}`}>
             <Search size={16} /> Browse Ebooks
           </Link>
 
           {user && (
-            <Link onClick={() => setMobileOpen(false)} href={getDashboardHref()} className={`flex gap-2 items-center text-sm ${isActive("/dashboard") ? "text-[#AE7C54] font-semibold" : "text-[#f6f1ea]"}`}>
+            <Link href={getDashboardHref()} className={`flex gap-2 items-center text-sm ${isActive("/dashboard") ? "text-[#AE7C54] font-semibold" : "text-[#f6f1ea]"}`}>
               <LayoutDashboard size={16} /> Dashboard
             </Link>
           )}

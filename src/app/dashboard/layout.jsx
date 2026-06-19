@@ -1,25 +1,31 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import DashboardSideBar from "@/components/dashboard/DashboardSidebar";
 import Topbar from "@/components/dashboard/TopBar";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 // Dashboard Layout (Protected + Role based UI wrapper)
 export default function DashboardLayout({ children }) {
   const { data: session, isPending } = useSession();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
 
-//   // 🔐 Protect dashboard routes
-//   useEffect(() => {
-//     if (!isPending && !session) {
-//       router.replace("/auth/signin");
-//     }
-//   }, [session, isPending, router]);
+  // Set isClient to true once the component mounts on the browser
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  // ⏳ Loading state
-  if (isPending) {
+  // 🔐 Protect dashboard routes
+  useEffect(() => {
+    if (isClient && !isPending && !session) {
+      router.replace("/auth/signin");
+    }
+  }, [session, isPending, router, isClient]);
+
+  // ⏳ Loading state (Prevents hydration mismatch by matching server & initial client states)
+  if (!isClient || isPending) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
         <div className="h-10 w-10 border-4 border-teal-600 border-t-transparent rounded-full animate-spin" />
@@ -27,8 +33,8 @@ export default function DashboardLayout({ children }) {
     );
   }
 
-  //  No session fallback
-  //if (!session) return null;
+  // No session fallback
+  if (!session) return null;
 
   return (
     <div className="flex h-screen bg-gray-100">

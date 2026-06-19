@@ -1,11 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
   reactCompiler: true,
+
   images: {
-    domains: ["ui-avatars.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "ui-avatars.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "i.ibb.co",
+      },
+    ],
   },
-  
 };
 
 export default nextConfig;
