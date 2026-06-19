@@ -402,8 +402,7 @@ export default function UserDashboardPage() {
               </table>
             </div>
           )}
-        </div>
-      </section>
+        
     </main>
   );
 }
