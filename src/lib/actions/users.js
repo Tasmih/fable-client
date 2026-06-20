@@ -1,31 +1,41 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-// get logged in user purchased ebooks
-export const getPurchasedEbooks = async (email) => {
-  const res = await fetch(
-    `${API_URL}/api/users/purchased-ebooks?email=${encodeURIComponent(email)}`
-  );
-
-  const data = await res.json();
+const readJson = async (res, fallbackMessage) => {
+  const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new Error(data.message || "failed to load purchased ebooks");
+    throw new Error(data?.message || fallbackMessage);
   }
 
   return data;
 };
 
+// get logged in user purchased ebooks
+export const getPurchasedEbooks = async (email) => {
+  const res = await fetch(
+    `${API_URL}/api/users/purchased-ebooks?email=${encodeURIComponent(email)}`,
+    { cache: "no-store" }
+  );
+
+  return readJson(res, "failed to load purchased ebooks");
+};
+
 // get logged in user purchase history
 export const getPurchaseHistory = async (email) => {
   const res = await fetch(
-    `${API_URL}/api/users/purchase-history?email=${encodeURIComponent(email)}`
+    `${API_URL}/api/users/purchase-history?email=${encodeURIComponent(email)}`,
+    { cache: "no-store" }
   );
 
-  const data = await res.json();
+  return readJson(res, "failed to load purchase history");
+};
 
-  if (!res.ok) {
-    throw new Error(data.message || "failed to load purchase history");
-  }
+// get logged in user bookmarked ebooks
+export const getBookmarks = async (email) => {
+  const res = await fetch(
+    `${API_URL}/api/users/bookmarks?email=${encodeURIComponent(email)}`,
+    { cache: "no-store" }
+  );
 
-  return data;
+  return readJson(res, "failed to load bookmarks");
 };

@@ -1,3 +1,4 @@
+import FeaturedEbooks from "@/components/FeaturedEbooks";
 import Hero from "@/components/Hero";
 import WhyChooseFable from "@/components/WhyChooseFable";
 
@@ -7,6 +8,7 @@ export default function Home() {
   return (
     <div >
       <Hero/>
+      <FeaturedEbooks/>
       <WhyChooseFable/>
     
     </div>

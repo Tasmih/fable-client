@@ -1,9 +1,9 @@
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+// ➕ CREATE EBOOK
 
-// create new ebook
-// this function sends ebook data to backend
 export const createEbook = async (ebookData) => {
   const res = await fetch(`${API_URL}/api/ebooks`, {
     method: "POST",
@@ -13,12 +13,6 @@ export const createEbook = async (ebookData) => {
     body: JSON.stringify(ebookData),
   });
 
-  const contentType = res.headers.get("content-type");
-
-  if (!contentType || !contentType.includes("application/json")) {
-    throw new Error("server returned an invalid response");
-  }
-
   const data = await res.json();
 
   if (!res.ok) {
@@ -27,20 +21,23 @@ export const createEbook = async (ebookData) => {
 
   return data;
 };
+// GET ALL EBOOKS
 
-// get all ebooks for browse page
-// this function supports search, filter, sort and pagination
 export const getEbooks = async (queryString = "") => {
   const res = await fetch(`${API_URL}/api/ebooks?${queryString}`);
 
+  const data = await res.json();
+
   if (!res.ok) {
-    throw new Error("failed to load ebooks");
+    throw new Error(data.message || "failed to load ebooks");
   }
 
-  return res.json();
+  return data;
 };
 
-// get single ebook details
+
+// GET SINGLE EBOOK
+
 export const getEbookById = async (id, email = "") => {
   const url = email
     ? `${API_URL}/api/ebooks/${id}?email=${encodeURIComponent(email)}`
@@ -48,70 +45,95 @@ export const getEbookById = async (id, email = "") => {
 
   const res = await fetch(url);
 
+  const data = await res.json();
+
   if (!res.ok) {
-    throw new Error("failed to load ebook");
+    throw new Error(data.message || "failed to load ebook");
   }
 
-  return res.json();
+  return data;
 };
 
-// get writer own ebooks
+
+ // GET WRITER EBOOKS
+
 export const getMyEbooks = async (email) => {
-  const res = await fetch(`${API_URL}/api/ebooks/my-ebooks?email=${email}`);
+  const res = await fetch(
+    `${API_URL}/api/ebooks/my-ebooks?email=${encodeURIComponent(email)}`
+  );
+
+  const data = await res.json();
 
   if (!res.ok) {
-    throw new Error("failed to load my ebooks");
+    throw new Error(data.message || "failed to load my ebooks");
   }
 
-  return res.json();
+  return data;
 };
 
-// delete ebook
+ //🗑 DELETE EBOOK
+
 export const deleteEbook = async (id) => {
   const res = await fetch(`${API_URL}/api/ebooks/${id}`, {
     method: "DELETE",
   });
 
+  const data = await res.json();
+
   if (!res.ok) {
-    throw new Error("failed to delete ebook");
+    throw new Error(data.message || "failed to delete ebook");
   }
 
-  return res.json();
+  return data;
 };
 
-// publish or unpublish ebook
+
+// 🔄 TOGGLE STATUS
+
 export const toggleEbookStatus = async (id) => {
   const res = await fetch(`${API_URL}/api/ebooks/${id}/toggle-status`, {
     method: "PATCH",
   });
 
-  if (!res.ok) {
-    throw new Error("failed to update ebook status");
-  }
-
-  return res.json();
-};
-
-
-// create stripe checkout session
-// this function sends ebook id and user email to backend
-export const createCheckoutSession = async ({ ebookId, userEmail }) => {
-  const res = await fetch(`${API_URL}/api/payment/create-checkout`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ ebookId, userEmail }),
-  });
-
   const data = await res.json();
 
   if (!res.ok) {
-    throw new Error(data.message || "failed to create checkout session");
+    throw new Error(data.message || "failed to update ebook status");
   }
 
   return data;
 };
+
+
+// 💳 STRIPE CHECKOUT
+
+export const createCheckoutSession = async ({
+  ebookId,
+  userEmail,
+}) => {
+  const res = await fetch(
+    `${API_URL}/api/payment/create-checkout`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ebookId, userEmail }),
+    }
+  );
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data.message || "failed to create checkout session"
+    );
+  }
+
+  return data;
+};
+
+
 
 // add ebook to bookmark
 export const addBookmark = async (ebookId, email) => {
@@ -119,13 +141,14 @@ export const addBookmark = async (ebookId, email) => {
     `${API_URL}/api/users/bookmark/${ebookId}?email=${encodeURIComponent(email)}`,
     {
       method: "POST",
+      cache: "no-store",
     }
   );
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new Error(data.message || "failed to bookmark ebook");
+    throw new Error(data?.message || "failed to bookmark ebook");
   }
 
   return data;
@@ -137,13 +160,14 @@ export const removeBookmark = async (ebookId, email) => {
     `${API_URL}/api/users/bookmark/${ebookId}?email=${encodeURIComponent(email)}`,
     {
       method: "DELETE",
+      cache: "no-store",
     }
   );
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new Error(data.message || "failed to remove bookmark");
+    throw new Error(data?.message || "failed to remove bookmark");
   }
 
   return data;
