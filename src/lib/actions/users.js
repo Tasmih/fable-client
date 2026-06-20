@@ -10,7 +10,7 @@ const readJson = async (res, fallbackMessage) => {
   return data;
 };
 
-// get logged in user purchased ebooks
+// user action: get purchased ebooks
 export const getPurchasedEbooks = async (email) => {
   const res = await fetch(
     `${API_URL}/api/users/purchased-ebooks?email=${encodeURIComponent(email)}`,
@@ -20,7 +20,7 @@ export const getPurchasedEbooks = async (email) => {
   return readJson(res, "failed to load purchased ebooks");
 };
 
-// get logged in user purchase history
+// user action: get purchase history
 export const getPurchaseHistory = async (email) => {
   const res = await fetch(
     `${API_URL}/api/users/purchase-history?email=${encodeURIComponent(email)}`,
@@ -30,7 +30,7 @@ export const getPurchaseHistory = async (email) => {
   return readJson(res, "failed to load purchase history");
 };
 
-// get logged in user bookmarked ebooks
+// user action: get bookmarked ebooks
 export const getBookmarks = async (email) => {
   const res = await fetch(
     `${API_URL}/api/users/bookmarks?email=${encodeURIComponent(email)}`,
@@ -38,4 +38,30 @@ export const getBookmarks = async (email) => {
   );
 
   return readJson(res, "failed to load bookmarks");
+};
+
+// user action: get user profile
+export const getUserProfile = async (email) => {
+  const res = await fetch(
+    `${API_URL}/api/users/profile?email=${encodeURIComponent(email)}`,
+    { cache: "no-store" }
+  );
+
+  return readJson(res, "failed to load user profile");
+};
+
+// user action: update user profile
+export const updateUserProfile = async (email, profileData) => {
+  const res = await fetch(
+    `${API_URL}/api/users/profile?email=${encodeURIComponent(email)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(profileData),
+    }
+  );
+
+  return readJson(res, "failed to update profile");
 };

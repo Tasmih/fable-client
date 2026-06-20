@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { useSession } from "@/lib/auth-client";
+import {
+  getPurchasedEbooks,
+  getPurchaseHistory,
+  getUserProfile,
+} from "@/lib/actions/users";
 import {
   ArrowLeft,
   BookOpen,
@@ -15,50 +22,56 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { useSession } from "@/lib/auth-client";
-import {
-  getPurchasedEbooks,
-  getPurchaseHistory,
-} from "@/lib/actions/users";
 
 export default function UserProfilePage() {
+  const router = useRouter();
   const { data: session, isPending } = useSession();
 
+  const [profile, setProfile] = useState(null);
   const [purchasedEbooks, setPurchasedEbooks] = useState([]);
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const userEmail = session?.user?.email || "";
 
-  // load profile related data
-  const loadProfileData = async () => {
-    if (!userEmail) {
-      setLoading(false);
-      return;
+  useEffect(() => {
+    if (!isPending && !session?.user) {
+      router.push("/auth/signin");
     }
-
-    try {
-      setLoading(true);
-
-      const [ebooksData, historyData] = await Promise.all([
-        getPurchasedEbooks(userEmail),
-        getPurchaseHistory(userEmail),
-      ]);
-
-      setPurchasedEbooks(ebooksData);
-      setPurchaseHistory(historyData);
-    } catch (err) {
-      toast.error(err.message || "failed to load profile data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isPending, session?.user, router]);
 
   useEffect(() => {
     if (isPending) return;
 
+    const loadProfileData = async () => {
+      if (!userEmail) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const [profileData, ebooksData, historyData] = await Promise.all([
+          getUserProfile(userEmail).catch(() => null),
+          getPurchasedEbooks(userEmail),
+          getPurchaseHistory(userEmail),
+        ]);
+
+        const finalProfile = profileData || session?.user || {};
+
+        setProfile(finalProfile);
+        setPurchasedEbooks(Array.isArray(ebooksData) ? ebooksData : []);
+        setPurchaseHistory(Array.isArray(historyData) ? historyData : []);
+      } catch (err) {
+        toast.error(err.message || "failed to load profile data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadProfileData();
-  }, [isPending, userEmail]);
+  }, [isPending, userEmail, session?.user]);
 
   const formatDate = (date) => {
     if (!date) return "unknown";
@@ -71,25 +84,31 @@ export default function UserProfilePage() {
   };
 
   const totalSpent = purchaseHistory.reduce(
-    (sum, item) => sum + Number(item.amount || 0),
+    (sum, item) => sum + Number(item.amount || item.price || 0),
     0
   );
 
   const lastPurchase = purchaseHistory[0];
 
+  const profileName = profile?.name || session?.user?.name || "Reader";
+  const profileImage = profile?.image || session?.user?.image || "";
+  const profileRole = profile?.role || session?.user?.role || "user";
+
   if (isPending || loading) {
     return (
-      <main className="min-h-screen bg-[#f6f1ea] px-4 py-8 md:px-8">
-        <section className="mx-auto flex min-h-[60vh] max-w-5xl items-center justify-center">
-          <div className="rounded-3xl bg-white p-8 text-center shadow-sm">
-            <Loader2
-              size={30}
-              className="mx-auto animate-spin text-[#053c41]"
-            />
+      <main className="min-h-screen bg-[#f6f1ea]/50 px-4 py-6 md:px-8">
+        <section className="mx-auto max-w-7xl">
+          <div className="flex min-h-[50vh] items-center justify-center rounded-3xl bg-white shadow-sm">
+            <div className="text-center">
+              <Loader2
+                size={34}
+                className="mx-auto animate-spin text-[#AE7C54]"
+              />
 
-            <p className="mt-3 text-sm font-semibold text-[#053c41]">
-              Loading profile...
-            </p>
+              <p className="mt-3 text-sm font-semibold text-[#053c41]">
+                Loading profile...
+              </p>
+            </div>
           </div>
         </section>
       </main>
@@ -97,177 +116,188 @@ export default function UserProfilePage() {
   }
 
   if (!session?.user) {
-    return (
-      <main className="min-h-screen bg-[#f6f1ea] px-4 py-8 md:px-8">
-        <section className="mx-auto max-w-3xl rounded-3xl bg-white p-8 text-center shadow-sm">
-          <h1 className="text-2xl font-bold text-[#053c41]">
-            Please login first
-          </h1>
-
-          <p className="mt-2 text-sm text-[#053c41]/70">
-            You need to login to view your profile.
-          </p>
-
-          <Link
-            href="/auth/signin"
-            className="mt-6 inline-flex rounded-xl bg-[#053c41] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f6f7a]"
-          >
-            Login Now
-          </Link>
-        </section>
-      </main>
-    );
+    return null;
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f1ea] px-4 py-8 md:px-8">
-      <section className="mx-auto max-w-5xl">
-        <Link
-          href="/dashboard/user"
-          className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#053c41]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#053c41] shadow-sm transition hover:bg-[#053c41] hover:text-white"
-        >
-          <ArrowLeft size={16} />
-          Back to Dashboard
-        </Link>
+    <main className="min-h-screen bg-[#f6f1ea]/50 px-4 py-6 md:px-8">
+      <section className="mx-auto max-w-7xl">
+        {/* top buttons */}
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            href="/dashboard/user"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#053c41]/20 bg-white px-4 py-3 text-sm font-semibold text-[#053c41] shadow-sm transition hover:bg-[#053c41] hover:text-white"
+          >
+            <ArrowLeft size={16} />
+            Back to Dashboard
+          </Link>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/dashboard/user/updateProfile"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C54] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#c99367]"
+            >
+              <UserRound size={16} />
+              Update Profile
+            </Link>
+
+            <Link
+              href="/dashboard/user/bookmarks"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#AE7C54]/30 bg-white px-4 py-3 text-sm font-semibold text-[#053c41] shadow-sm transition hover:bg-[#053c41] hover:text-white"
+            >
+              <Bookmark size={16} />
+              My Bookmarks
+            </Link>
+          </div>
+        </div>
 
         {/* profile header */}
-        <div className="rounded-3xl bg-[#053c41] p-6 text-white shadow-sm md:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#AE7C54]">
-            profile management
-          </p>
+        <div className="mb-5 rounded-3xl bg-white p-6 shadow-sm md:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center">
+            {profileImage ? (
+              <img
+                src={profileImage}
+                alt={profileName}
+                referrerPolicy="no-referrer"
+                className="h-28 w-28 rounded-3xl object-cover"
+              />
+            ) : (
+              <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-[#053c41] text-white">
+                <UserRound size={44} />
+              </div>
+            )}
 
-          <div className="mt-5 flex flex-col gap-5 md:flex-row md:items-center">
-            <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white/10 text-white">
-              {session?.user?.image ? (
-                <img
-                  src={session.user.image}
-                  alt={session?.user?.name || "user"}
-                  className="h-24 w-24 rounded-3xl object-cover"
-                />
-              ) : (
-                <UserRound size={46} />
-              )}
-            </div>
+            <div className="flex-1">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#f6f1ea] px-4 py-2 text-sm font-semibold text-[#AE7C54]">
+                <ShieldCheck size={16} />
+                Profile Management
+              </div>
 
-            <div>
-              <h1 className="text-3xl font-bold md:text-4xl">
-                {session?.user?.name || "Reader"}
+              <h1 className="text-3xl font-bold text-[#053c41] md:text-4xl">
+                {profileName}
               </h1>
 
-              <p className="mt-2 flex items-center gap-2 text-sm text-white/75">
-                <Mail size={16} className="text-[#AE7C54]" />
-                {session?.user?.email}
+              <p className="mt-2 flex items-center gap-2 text-sm text-[#053c41]/70">
+                <Mail size={15} className="text-[#AE7C54]" />
+                {userEmail}
               </p>
 
-              <p className="mt-2 flex items-center gap-2 text-sm text-white/75">
-                <ShieldCheck size={16} className="text-[#AE7C54]" />
-                Role: {session?.user?.role || "user"}
+              <p className="mt-2 inline-flex rounded-full bg-[#053c41]/5 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#AE7C54]">
+                Role: {profileRole}
               </p>
             </div>
           </div>
         </div>
 
         {/* stats */}
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f6f1ea] text-[#AE7C54]">
-                <BookOpen size={23} />
-              </div>
+        <div className="mb-5 grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="rounded-3xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-[#053c41]/60">
+              Purchased Ebooks
+            </p>
 
-              <div>
-                <p className="text-sm text-[#053c41]/60">Purchased Ebooks</p>
-                <h2 className="text-2xl font-bold text-[#053c41]">
-                  {purchasedEbooks.length}
-                </h2>
-              </div>
+            <div className="mt-3 flex items-center justify-between">
+              <h2 className="text-3xl font-bold text-[#053c41]">
+                {purchasedEbooks.length}
+              </h2>
+
+              <BookOpen size={30} className="text-[#AE7C54]" />
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f6f1ea] text-[#AE7C54]">
-                <DollarSign size={23} />
-              </div>
+          <div className="rounded-3xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-[#053c41]/60">
+              Total Spent
+            </p>
 
-              <div>
-                <p className="text-sm text-[#053c41]/60">Total Spent</p>
-                <h2 className="text-2xl font-bold text-[#053c41]">
-                  ${totalSpent.toFixed(2)}
-                </h2>
-              </div>
+            <div className="mt-3 flex items-center justify-between">
+              <h2 className="text-3xl font-bold text-[#053c41]">
+                ${totalSpent.toFixed(2)}
+              </h2>
+
+              <DollarSign size={30} className="text-[#AE7C54]" />
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f6f1ea] text-[#AE7C54]">
-                <ReceiptText size={23} />
-              </div>
+          <div className="rounded-3xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-[#053c41]/60">
+              Transactions
+            </p>
 
-              <div>
-                <p className="text-sm text-[#053c41]/60">Transactions</p>
-                <h2 className="text-2xl font-bold text-[#053c41]">
-                  {purchaseHistory.length}
-                </h2>
-              </div>
+            <div className="mt-3 flex items-center justify-between">
+              <h2 className="text-3xl font-bold text-[#053c41]">
+                {purchaseHistory.length}
+              </h2>
+
+              <ReceiptText size={30} className="text-[#AE7C54]" />
             </div>
           </div>
         </div>
 
-        {/* account information */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-3xl bg-white p-5 shadow-sm md:p-6">
-            <h2 className="text-2xl font-bold text-[#053c41]">
-              Account Information
-            </h2>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          {/* account info */}
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-2xl font-bold text-[#053c41]">
+                Account Information
+              </h2>
 
-            <div className="mt-5 space-y-4">
+              <Link
+                href="/dashboard/user/updateProfile"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C54] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#c99367]"
+              >
+                <UserRound size={15} />
+                Edit
+              </Link>
+            </div>
+
+            <div className="space-y-4">
               <div className="rounded-2xl bg-[#f6f1ea] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#AE7C54]">
-                  full name
+                <p className="text-xs font-bold uppercase tracking-wide text-[#AE7C54]">
+                  Full Name
                 </p>
 
-                <p className="mt-1 text-sm font-semibold text-[#053c41]">
-                  {session?.user?.name || "Not provided"}
-                </p>
+                <h3 className="mt-1 text-lg font-bold text-[#053c41]">
+                  {profileName}
+                </h3>
               </div>
 
               <div className="rounded-2xl bg-[#f6f1ea] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#AE7C54]">
-                  email address
+                <p className="text-xs font-bold uppercase tracking-wide text-[#AE7C54]">
+                  Email Address
                 </p>
 
-                <p className="mt-1 break-all text-sm font-semibold text-[#053c41]">
-                  {session?.user?.email}
-                </p>
+                <h3 className="mt-1 break-all text-lg font-bold text-[#053c41]">
+                  {userEmail}
+                </h3>
               </div>
 
               <div className="rounded-2xl bg-[#f6f1ea] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#AE7C54]">
-                  account role
+                <p className="text-xs font-bold uppercase tracking-wide text-[#AE7C54]">
+                  Account Role
                 </p>
 
-                <p className="mt-1 text-sm font-semibold text-[#053c41]">
-                  {session?.user?.role || "user"}
-                </p>
+                <h3 className="mt-1 text-lg font-bold capitalize text-[#053c41]">
+                  {profileRole}
+                </h3>
               </div>
             </div>
           </div>
 
-          <div className="rounded-3xl bg-white p-5 shadow-sm md:p-6">
+          {/* reading activity */}
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
             <h2 className="text-2xl font-bold text-[#053c41]">
               Reading Activity
             </h2>
 
             {lastPurchase ? (
-              <div className="mt-5 rounded-2xl bg-[#f6f1ea] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#AE7C54]">
-                  last purchase
+              <div className="mt-5 rounded-2xl bg-[#f6f1ea] p-5">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#AE7C54]">
+                  Last Purchase
                 </p>
 
-                <h3 className="mt-2 text-base font-bold text-[#053c41]">
-                  {lastPurchase.ebookTitle}
+                <h3 className="mt-2 text-xl font-bold text-[#053c41]">
+                  {lastPurchase.ebookTitle || "Unknown Ebook"}
                 </h3>
 
                 <p className="mt-2 flex items-center gap-2 text-sm text-[#053c41]/70">
@@ -277,21 +307,20 @@ export default function UserProfilePage() {
 
                 <Link
                   href={`/ebooks/${lastPurchase.ebookId}`}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#053c41] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f6f7a]"
+                  className="mt-5 inline-flex rounded-xl bg-[#053c41] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f6f7a]"
                 >
-                  <BookOpen size={15} />
                   Read Ebook
                 </Link>
               </div>
             ) : (
-              <div className="mt-5 rounded-2xl bg-[#f6f1ea] p-5 text-center">
-                <BookOpen size={36} className="mx-auto text-[#AE7C54]" />
+              <div className="mt-5 rounded-2xl bg-[#f6f1ea] p-8 text-center">
+                <BookOpen size={42} className="mx-auto text-[#AE7C54]" />
 
-                <h3 className="mt-3 text-lg font-bold text-[#053c41]">
+                <h3 className="mt-3 text-xl font-bold text-[#053c41]">
                   No reading activity yet
                 </h3>
 
-                <p className="mt-1 text-sm text-[#053c41]/70">
+                <p className="mt-2 text-sm text-[#053c41]/70">
                   Purchase an ebook to start your reading journey.
                 </p>
               </div>
@@ -300,21 +329,31 @@ export default function UserProfilePage() {
         </div>
 
         {/* quick actions */}
-        <div className="mt-6 rounded-3xl bg-white p-5 shadow-sm md:p-6">
-          <h2 className="text-2xl font-bold text-[#053c41]">Quick Actions</h2>
+        <div className="mt-5 rounded-3xl bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-xl font-bold text-[#053c41]">
+            Quick Actions
+          </h2>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
             <Link
               href="/ebooks"
-              className="flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f6f7a]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C54] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#c99367]"
             >
               <BookOpen size={16} />
               Browse Ebooks
             </Link>
 
             <Link
-              href="/dashboard/user"
-              className="flex items-center justify-center gap-2 rounded-xl border border-[#053c41]/20 bg-white px-5 py-3 text-sm font-semibold text-[#053c41] transition hover:bg-[#053c41] hover:text-white"
+              href="/dashboard/user/purchasedBooks"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#053c41]/20 px-4 py-3 text-sm font-semibold text-[#053c41] transition hover:bg-[#053c41] hover:text-white"
+            >
+              <BookOpen size={16} />
+              My Books
+            </Link>
+
+            <Link
+              href="/dashboard/user/purchaseHistory"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#053c41]/20 px-4 py-3 text-sm font-semibold text-[#053c41] transition hover:bg-[#053c41] hover:text-white"
             >
               <ReceiptText size={16} />
               Purchase History
@@ -322,7 +361,7 @@ export default function UserProfilePage() {
 
             <Link
               href="/dashboard/user/bookmarks"
-              className="flex items-center justify-center gap-2 rounded-xl bg-[#AE7C54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c99367]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#AE7C54]/30 bg-[#f6f1ea] px-4 py-3 text-sm font-semibold text-[#053c41] transition hover:bg-[#053c41] hover:text-white"
             >
               <Bookmark size={16} />
               My Bookmarks
