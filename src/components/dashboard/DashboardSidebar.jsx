@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -12,9 +13,12 @@ import {
   CreditCard,
   Persons,
   SquareChartBar,
+  Bookmark,
+  Receipt,
+  ShieldCheck,
 } from "@gravity-ui/icons";
+
 import { signOut, useSession } from "@/lib/auth-client";
-import { useState } from "react";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -33,6 +37,7 @@ export default function DashboardSidebar({ user }) {
   const [imageError, setImageError] = useState(false);
 
   const sessionUser = session?.user || {};
+
   const mergedUser = {
     ...user,
     ...sessionUser,
@@ -46,68 +51,124 @@ export default function DashboardSidebar({ user }) {
   const userEmail = mergedUser?.email || "reader@fable.com";
 
   const menu = {
-    user: [
-  { name: "Overview", icon: House, href: "/dashboard/user" },
-  { name: "Purchased Books", icon: BookOpen, href: "/dashboard/user/purchasedBooks" },
-  { name: "Purchase History", icon: CreditCard, href: "/dashboard/user/purchaseHistory" },
-  { name: "Bookmarks", icon: FileText, href: "/dashboard/user/bookmarks" },
-  { name: "Profile", icon: Person, href: "/dashboard/user/profile" },
-  { name: "Update Profile", icon: Person, href: "/dashboard/user/updateProfile" },
+user: [
+{
+name: "Overview",
+icon: House,
+href: "/dashboard/user",
+},
+{
+name: "Purchased Books",
+icon: BookOpen,
+href: "/dashboard/user/purchasedBooks",
+},
+{
+name: "Purchase History",
+icon: CreditCard,
+href: "/dashboard/user/purchaseHistory",
+},
+{
+name: "Bookmarks",
+icon: Bookmark,
+href: "/dashboard/user/bookmarks",
+},
+{
+name: "Profile",
+icon: Person,
+href: "/dashboard/user/profile",
+},
+{
+name: "Update Profile",
+icon: Person,
+href: "/dashboard/user/updateProfile",
+},
 ],
 
-    writer: [
-      {
-        name: "Dashboard",
-        icon: SquareChartBar,
-        href: "/dashboard/writer",
-      },
-      {
-        name: "My Books",
-        icon: BookOpen,
-        href: "/dashboard/writer/books",
-      },
-      {
-        name: "Add Ebook",
-        icon: Plus,
-        href: "/dashboard/writer/add-ebook",
-      },
-      {
-        name: "Sales History",
-        icon: CreditCard,
-        href: "/dashboard/writer/sales",
-      },
-    ],
+writer: [
+  {
+    name: "Overview",
+    icon: House,
+    href: "/dashboard/writer",
+  },
+  {
+    name: "Manage Ebooks",
+    icon: BookOpen,
+    href: "/dashboard/writer/manageEbooks",
+  },
+  {
+    name: "Add Ebook",
+    icon: Plus,
+    href: "/dashboard/writer/addEbook",
+  },
+  {
+    name: "Bookmarks",
+    icon: Bookmark,
+    href: "/dashboard/writer/bookmarks",
+  },
+  {
+    name: "Purchased Books",
+    icon: BookOpen,
+    href: "/dashboard/user/purchasedBooks",
+  },
+  {
+    name: "Purchase History",
+    icon: CreditCard,
+    href: "/dashboard/user/purchaseHistory",
+  },
+  {
+    name: "Sales History",
+    icon: Receipt,
+    href: "/dashboard/writer/salesHistory",
+  },
+  {
+    name: "Profile",
+    icon: Person,
+    href: "/dashboard/writer/profile",
+  },
+  {
+    name: "Update Profile",
+    icon: Person,
+    href: "/dashboard/writer/updateProfile",
+  },
+  {
+    name: "Writer Verification",
+    icon: ShieldCheck,
+    href: "/dashboard/writer/verify",
+  },
+],
 
-    admin: [
-      {
-        name: "Dashboard",
-        icon: House,
-        href: "/dashboard/admin",
-      },
-      {
-        name: "Users",
-        icon: Persons,
-        href: "/dashboard/admin/users",
-      },
-      {
-        name: "Ebooks",
-        icon: BookOpen,
-        href: "/dashboard/admin/ebooks",
-      },
-      {
-        name: "Transactions",
-        icon: CreditCard,
-        href: "/dashboard/admin/transactions",
-      },
-      {
-        name: "Analytics",
-        icon: SquareChartBar,
-        href: "/dashboard/admin/analytics",
-      },
-    ],
-  };
+admin: [
+{
+name: "Dashboard",
+icon: House,
+href: "/dashboard/admin",
+},
+{
+name: "Users",
+icon: Persons,
+href: "/dashboard/admin/users",
+},
+{
+name: "Ebooks",
+icon: BookOpen,
+href: "/dashboard/admin/ebooks",
+},
+{
+name: "Transactions",
+icon: CreditCard,
+href: "/dashboard/admin/transactions",
+},
+{
+name: "Analytics",
+icon: SquareChartBar,
+href: "/dashboard/admin/analytics",
+},
+],
+};
 
-  const items = menu[role] || [];
+
+  const items = menu[role] || menu.user;
+  const roleHome = DEFAULT_ROUTES[role] || "/dashboard/user";
 
   const handleLogout = async () => {
     await signOut();
@@ -120,30 +181,35 @@ export default function DashboardSidebar({ user }) {
       <div className="border-b border-[#AE7C54]/20 p-5">
         <Link href="/" className="inline-block">
           <h1 className="text-xl font-bold tracking-wide">FABLE</h1>
-          <p className="text-xs text-[#f6f1ea]/70">Ebook Sharing Platform</p>
+          <p className="text-xs text-[#f6f1ea]/70">
+            Ebook Sharing Platform
+          </p>
         </Link>
       </div>
 
       {/* dev role switcher */}
       {IS_DEV && (
         <div className="border-b border-yellow-400/30 bg-yellow-500/20 px-4 py-2">
-          <p className="mb-1 text-xs text-yellow-300">🛠 dev: role preview</p>
+          <p className="mb-1 text-xs text-yellow-300">
+            dev: role preview
+          </p>
 
           <div className="flex gap-1">
-            {["user", "writer", "admin"].map((r) => (
+            {["user", "writer", "admin"].map((roleName) => (
               <button
-                key={r}
+                key={roleName}
+                type="button"
                 onClick={() => {
-                  setDevRole(r === actualRole ? null : r);
-                  router.push(DEFAULT_ROUTES[r]);
+                  setDevRole(roleName === actualRole ? null : roleName);
+                  router.push(DEFAULT_ROUTES[roleName]);
                 }}
                 className={`rounded px-2 py-1 text-xs capitalize transition ${
-                  role === r
+                  role === roleName
                     ? "bg-yellow-400 font-bold text-black"
                     : "bg-white/10 text-white hover:bg-white/20"
                 }`}
               >
-                {r}
+                {roleName}
               </button>
             ))}
           </div>
@@ -169,7 +235,9 @@ export default function DashboardSidebar({ user }) {
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{userName}</p>
 
-          <p className="truncate text-xs text-[#f6f1ea]/70">{userEmail}</p>
+          <p className="truncate text-xs text-[#f6f1ea]/70">
+            {userEmail}
+          </p>
 
           <p className="mt-1 text-xs uppercase tracking-wide text-[#AE7C54]">
             {role}
@@ -182,10 +250,14 @@ export default function DashboardSidebar({ user }) {
         {items.map((item) => {
           const Icon = item.icon;
 
+          const isEditEbookPage =
+            item.href === "/dashboard/writer/manageEbooks" &&
+            pathname.startsWith("/dashboard/writer/editEbook");
+
           const active =
             pathname === item.href ||
-            (item.href !== "/dashboard/user" &&
-              pathname.startsWith(item.href));
+            (item.href !== roleHome && pathname.startsWith(`${item.href}/`)) ||
+            isEditEbookPage;
 
           return (
             <Link
@@ -207,6 +279,7 @@ export default function DashboardSidebar({ user }) {
       {/* logout */}
       <div className="border-t border-[#AE7C54]/20 p-4">
         <button
+          type="button"
           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-red-200 transition hover:bg-red-500/10 hover:text-red-100"
         >

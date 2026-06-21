@@ -1,333 +1,357 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "react-toastify";
-import {
-  BookOpen, Plus, Pencil, Trash2,
-  Eye, EyeOff, Loader2, Search, Filter
-} from "lucide-react";
+import { useSession } from "@/lib/auth-client";
+import { getWriterOverview } from "@/lib/actions/writer";
+import * as Icons from "@gravity-ui/icons";
 
-// Dummy data to simulate backend response
-const DUMMY_BOOKS = [
-  {
-    _id: "1",
-    title: "The Silent Ocean",
-    genre: "Fiction",
-    price: 9.99,
-    status: "published",
-    totalSales: 5,
-    coverImage: "https://placehold.co/80x110/053c41/f6f1ea?text=Book",
-    createdAt: "2026-05-10",
-  },
-  {
-    _id: "2",
-    title: "Echoes of Tomorrow",
-    genre: "Sci-Fi",
-    price: 12.99,
-    status: "published",
-    totalSales: 4,
-    coverImage: "https://placehold.co/80x110/AE7C54/f6f1ea?text=Book",
-    createdAt: "2026-05-18",
-  },
-  {
-    _id: "3",
-    title: "Midnight Garden",
-    genre: "Romance",
-    price: 7.99,
-    status: "unpublished",
-    totalSales: 3,
-    coverImage: "https://placehold.co/80x110/053c41/f6f1ea?text=Book",
-    createdAt: "2026-06-01",
-  },
-  {
-    _id: "4",
-    title: "Dark Horizons",
-    genre: "Mystery",
-    price: 8.99,
-    status: "published",
-    totalSales: 0,
-    coverImage: "https://placehold.co/80x110/AE7C54/f6f1ea?text=Book",
-    createdAt: "2026-06-05",
-  },
-  {
-    _id: "5",
-    title: "Beyond the Stars",
-    genre: "Fantasy",
-    price: 11.99,
-    status: "unpublished",
-    totalSales: 0,
-    coverImage: "https://placehold.co/80x110/053c41/f6f1ea?text=Book",
-    createdAt: "2026-06-10",
-  },
-];
+const BookIcon = Icons.BookOpen || Icons.FileText;
+const PlusIcon = Icons.Plus;
+const SaleIcon = Icons.Receipt || Icons.ChartColumn;
+const ChartIcon = Icons.ChartColumn || Icons.Receipt;
+const CheckIcon = Icons.CircleCheck || Icons.Check;
+const ShieldIcon = Icons.ShieldCheck || Icons.CircleCheck;
+const CreditIcon = Icons.CreditCard || Icons.Receipt;
+const ClockIcon = Icons.Clock;
 
-export default function MyBooksPage() {
-  const router = useRouter();
-  const [books, setBooks] = useState(DUMMY_BOOKS);
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+const IconView = ({ icon: Icon, className }) => {
+  if (!Icon) return null;
 
-  // Filter books by search text and status
-  const filtered = books.filter((b) => {
-    const matchSearch = b.title.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus === "all" || b.status === filterStatus;
-    return matchSearch && matchStatus;
-  });
+  return <Icon className={className} />;
+};
 
-  // Toggle publish/unpublish status locally
-  const handleToggle = (id, current) => {
-    setBooks((prev) =>
-      prev.map((b) =>
-        b._id === id
-          ? { ...b, status: current === "published" ? "unpublished" : "published" }
-          : b
-      )
+export default function WriterDashboardPage() {
+  const { data: session, isPending } = useSession();
+
+  const [overview, setOverview] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const userEmail = session?.user?.email || "";
+
+  useEffect(() => {
+    if (isPending) return;
+
+    const loadOverview = async () => {
+      if (!userEmail) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const data = await getWriterOverview(userEmail);
+        setOverview(data);
+      } catch (err) {
+        toast.error(err.message || "failed to load writer overview");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOverview();
+  }, [isPending, userEmail]);
+
+  const formatMoney = (amount) => {
+    return `$${Number(amount || 0).toFixed(2)}`;
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "not available";
+
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const writer = overview?.writer;
+  const writerVerified = overview?.writerVerified;
+
+  if (isPending || loading) {
+    return (
+      <main className="min-h-screen bg-[#f6f1ea]/50 px-4 py-6 md:px-8">
+        <section className="mx-auto max-w-7xl">
+          <div className="flex min-h-[50vh] items-center justify-center rounded-3xl bg-white shadow-sm">
+            <div className="text-center">
+              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#AE7C54]/20 border-t-[#AE7C54]" />
+
+              <p className="mt-3 text-sm font-semibold text-[#053c41]">
+                Loading writer dashboard...
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
     );
-    toast.success("Status updated");
-  };
-
-  // Delete book locally after confirmation
-  const handleDelete = (id) => {
-    if (!confirm("Are you sure you want to delete this ebook?")) return;
-    setBooks((prev) => prev.filter((b) => b._id !== id));
-    toast.success("Ebook deleted");
-  };
+  }
 
   return (
-    <div className="min-h-screen py-8 px-6" style={{ backgroundColor: "#f6f1ea" }}>
+    <main className="min-h-screen bg-[#f6f1ea]/50 px-4 py-6 md:px-8">
+      <section className="mx-auto max-w-7xl">
+        {/* header */}
+        <div className="mb-5 rounded-3xl bg-[#053c41] p-6 text-white shadow-sm md:p-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-[#f6f1ea]">
+                <IconView icon={ShieldIcon} className="h-4 w-4" />
+                Writer Dashboard
+              </div>
 
-      {/* Page header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#053c41" }}>
-            My Books
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "#053c41", opacity: 0.6 }}>
-            Manage all your published and draft ebooks
-          </p>
-        </div>
+              <h1 className="text-3xl font-bold md:text-4xl">
+                Welcome, {writer?.name || session?.user?.name || "Writer"}
+              </h1>
 
-        {/* Add new ebook button */}
-        <Link
-          href="/dashboard/writer/add-ebook"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition w-fit"
-          style={{ backgroundColor: "#AE7C54" }}
-        >
-          <Plus size={16} />
-          Add New Ebook
-        </Link>
-      </div>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">
+                Manage your ebooks, track sales, and publish your writing from
+                one organized dashboard.
+              </p>
+            </div>
 
-      {/* Search and filter bar */}
-      <div className="flex flex-col md:flex-row gap-3 mb-6">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/dashboard/writer/addEbook"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c99367]"
+              >
+                <IconView icon={PlusIcon} className="h-4 w-4" />
+                Add Ebook
+              </Link>
 
-        {/* Search input */}
-        <div className="relative flex-1">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2"
-            style={{ color: "#053c41", opacity: 0.4 }}
-          />
-          <input
-            type="text"
-            placeholder="Search by title..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#AE7C54]/40 transition"
-            style={{ borderColor: "#053c41/20", color: "#053c41" }}
-          />
-        </div>
-
-        {/* Status filter buttons */}
-        <div
-          className="flex gap-1 p-1 rounded-xl"
-          style={{ backgroundColor: "#e6f0f0" }}
-        >
-          {["all", "published", "unpublished"].map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition"
-              style={
-                filterStatus === s
-                  ? { backgroundColor: "#053c41", color: "#f6f1ea" }
-                  : { color: "#053c41", opacity: 0.6 }
-              }
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Books table */}
-      <div
-        className="bg-white rounded-2xl shadow-sm border overflow-hidden"
-        style={{ borderColor: "#e5e7eb" }}
-      >
-        {/* Result count */}
-        <div
-          className="px-6 py-3 border-b flex items-center gap-2"
-          style={{ borderColor: "#e5e7eb", backgroundColor: "#f6f1ea" }}
-        >
-          <Filter size={14} style={{ color: "#053c41", opacity: 0.5 }} />
-          <span className="text-xs" style={{ color: "#053c41", opacity: 0.6 }}>
-            Showing {filtered.length} of {books.length} books
-          </span>
-        </div>
-
-        {/* Empty state */}
-        {filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <BookOpen
-              size={40}
-              className="mx-auto mb-3"
-              style={{ color: "#053c41", opacity: 0.2 }}
-            />
-            <p className="text-sm" style={{ color: "#053c41", opacity: 0.5 }}>
-              No books found
-            </p>
+              <Link
+                href="/dashboard/writer/manageEbooks"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white hover:text-[#053c41]"
+              >
+                <IconView icon={BookIcon} className="h-4 w-4" />
+                Manage Ebooks
+              </Link>
+            </div>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+        </div>
 
-              {/* Table column headers */}
-              <thead>
-                <tr style={{ backgroundColor: "#f9fafb" }}>
-                  {["Cover", "Title", "Genre", "Price", "Status", "Sales", "Date", "Actions"].map((h) => (
-                    <th
-                      key={h}
-                      className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider"
-                      style={{ color: "#053c41", opacity: 0.6 }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+        {/* verification notice */}
+        {!writerVerified && (
+          <div className="mb-5 rounded-3xl border border-[#AE7C54]/25 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-[#053c41]">
+                  Writer verification required
+                </h2>
 
-              <tbody>
-                {filtered.map((book) => (
-                  <tr
-                    key={book._id}
-                    className="border-t hover:bg-[#f6f1ea]/50 transition"
-                    style={{ borderColor: "#e5e7eb" }}
-                  >
-                    {/* Cover image */}
-                    <td className="px-6 py-4">
-                      <img
-                        src={book.coverImage}
-                        alt={book.title}
-                        className="w-9 h-12 object-cover rounded-lg shadow-sm"
-                      />
-                    </td>
+                <p className="mt-2 text-sm leading-6 text-[#053c41]/70">
+                  You need to complete one-time writer verification payment
+                  before publishing ebooks.
+                </p>
+              </div>
 
-                    {/* Title */}
-                    <td
-                      className="px-6 py-4 font-medium max-w-[160px] truncate"
-                      style={{ color: "#053c41" }}
-                    >
-                      {book.title}
-                    </td>
-
-                    {/* Genre badge */}
-                    <td className="px-6 py-4">
-                      <span
-                        className="text-xs px-2 py-1 rounded-full font-medium"
-                        style={{ background: "#e6f0f0", color: "#053c41" }}
-                      >
-                        {book.genre}
-                      </span>
-                    </td>
-
-                    {/* Price */}
-                    <td
-                      className="px-6 py-4 font-semibold"
-                      style={{ color: "#AE7C54" }}
-                    >
-                      ${book.price}
-                    </td>
-
-                    {/* Status badge */}
-                    <td className="px-6 py-4">
-                      <span
-                        className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
-                          book.status === "published"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {book.status}
-                      </span>
-                    </td>
-
-                    {/* Sales count */}
-                    <td
-                      className="px-6 py-4 font-medium"
-                      style={{ color: "#053c41" }}
-                    >
-                      {book.totalSales}
-                    </td>
-
-                    {/* Created date */}
-                    <td
-                      className="px-6 py-4 text-xs"
-                      style={{ color: "#053c41", opacity: 0.6 }}
-                    >
-                      {new Date(book.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </td>
-
-                    {/* Action buttons */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-
-                        {/* Edit */}
-                        <button
-                          onClick={() => router.push(`/dashboard/writer/edit/${book._id}`)}
-                          title="Edit"
-                          className="hover:opacity-100 transition"
-                          style={{ color: "#053c41", opacity: 0.6 }}
-                        >
-                          <Pencil size={15} />
-                        </button>
-
-                        {/* Toggle publish */}
-                        <button
-                          onClick={() => handleToggle(book._id, book.status)}
-                          title={book.status === "published" ? "Unpublish" : "Publish"}
-                          className="hover:opacity-80 transition"
-                          style={{ color: "#AE7C54" }}
-                        >
-                          {book.status === "published"
-                            ? <EyeOff size={15} />
-                            : <Eye size={15} />
-                          }
-                        </button>
-
-                        {/* Delete */}
-                        <button
-                          onClick={() => handleDelete(book._id)}
-                          title="Delete"
-                          className="text-red-400 hover:text-red-500 transition"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              <Link
+                href="/dashboard/writer/verify"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f6f7a]"
+              >
+                <IconView icon={CreditIcon} className="h-4 w-4" />
+                Verify Now
+              </Link>
+            </div>
           </div>
         )}
-      </div>
-    </div>
+
+        {/* stats */}
+        <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-3xl bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-[#053c41]/60">
+                Total Ebooks
+              </p>
+
+              <IconView icon={BookIcon} className="h-7 w-7 text-[#AE7C54]" />
+            </div>
+
+            <h2 className="mt-4 text-3xl font-bold text-[#053c41]">
+              {overview?.totalEbooks || 0}
+            </h2>
+          </div>
+
+          <div className="rounded-3xl bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-[#053c41]/60">
+                Published
+              </p>
+
+              <IconView icon={CheckIcon} className="h-7 w-7 text-[#AE7C54]" />
+            </div>
+
+            <h2 className="mt-4 text-3xl font-bold text-[#053c41]">
+              {overview?.publishedEbooks || 0}
+            </h2>
+          </div>
+
+          <div className="rounded-3xl bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-[#053c41]/60">
+                Total Sales
+              </p>
+
+              <IconView icon={SaleIcon} className="h-7 w-7 text-[#AE7C54]" />
+            </div>
+
+            <h2 className="mt-4 text-3xl font-bold text-[#053c41]">
+              {overview?.totalSales || 0}
+            </h2>
+          </div>
+
+          <div className="rounded-3xl bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-[#053c41]/60">
+                Revenue
+              </p>
+
+              <IconView icon={ChartIcon} className="h-7 w-7 text-[#AE7C54]" />
+            </div>
+
+            <h2 className="mt-4 text-3xl font-bold text-[#053c41]">
+              {formatMoney(overview?.totalRevenue)}
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+          {/* recent ebooks */}
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <h2 className="text-2xl font-bold text-[#053c41]">
+                Recent Ebooks
+              </h2>
+
+              <Link
+                href="/dashboard/writer/manageEbooks"
+                className="text-sm font-semibold text-[#AE7C54] hover:underline"
+              >
+                View All
+              </Link>
+            </div>
+
+            {overview?.recentEbooks?.length > 0 ? (
+              <div className="space-y-4">
+                {overview.recentEbooks.map((ebook) => (
+                  <div
+                    key={ebook._id}
+                    className="flex gap-4 rounded-2xl bg-[#f6f1ea] p-4"
+                  >
+                    <img
+                      src={ebook.coverImage}
+                      alt={ebook.title}
+                      className="h-20 w-16 rounded-xl object-cover"
+                    />
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate font-bold text-[#053c41]">
+                        {ebook.title}
+                      </h3>
+
+                      <p className="mt-1 text-sm text-[#053c41]/65">
+                        {ebook.genre} · {formatMoney(ebook.price)}
+                      </p>
+
+                      <span className="mt-2 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold capitalize text-[#AE7C54]">
+                        {ebook.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-[#f6f1ea] p-8 text-center">
+                <IconView
+                  icon={BookIcon}
+                  className="mx-auto h-11 w-11 text-[#AE7C54]"
+                />
+
+                <h3 className="mt-3 text-xl font-bold text-[#053c41]">
+                  No ebooks yet
+                </h3>
+
+                <p className="mt-2 text-sm text-[#053c41]/70">
+                  Add your first ebook to start publishing on Fable.
+                </p>
+
+                <Link
+                  href="/dashboard/writer/addEbook"
+                  className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c99367]"
+                >
+                  <IconView icon={PlusIcon} className="h-4 w-4" />
+                  Add Ebook
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* recent sales */}
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <h2 className="text-2xl font-bold text-[#053c41]">
+                Recent Sales
+              </h2>
+
+              <Link
+                href="/dashboard/writer/salesHistory"
+                className="text-sm font-semibold text-[#AE7C54] hover:underline"
+              >
+                View All
+              </Link>
+            </div>
+
+            {overview?.recentSales?.length > 0 ? (
+              <div className="space-y-4">
+                {overview.recentSales.map((sale) => (
+                  <div
+                    key={sale._id}
+                    className="rounded-2xl bg-[#f6f1ea] p-4"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-bold text-[#053c41]">
+                          {sale.ebookTitle || "Unknown Ebook"}
+                        </h3>
+
+                        <p className="mt-1 text-sm text-[#053c41]/65">
+                          Buyer: {sale.buyerEmail}
+                        </p>
+                      </div>
+
+                      <p className="font-bold text-[#AE7C54]">
+                        {formatMoney(sale.amount)}
+                      </p>
+                    </div>
+
+                    <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#053c41]/60">
+                      <IconView icon={ClockIcon} className="h-4 w-4" />
+                      {formatDate(sale.purchaseDate || sale.createdAt)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-[#f6f1ea] p-8 text-center">
+                <IconView
+                  icon={SaleIcon}
+                  className="mx-auto h-11 w-11 text-[#AE7C54]"
+                />
+
+                <h3 className="mt-3 text-xl font-bold text-[#053c41]">
+                  No sales yet
+                </h3>
+
+                <p className="mt-2 text-sm text-[#053c41]/70">
+                  Sales history will appear here after readers purchase your
+                  ebooks.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }

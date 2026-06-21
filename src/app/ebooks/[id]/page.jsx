@@ -36,6 +36,7 @@ export default function EbookDetailsPage() {
   const [error, setError] = useState("");
 
   const userEmail = session?.user?.email || "";
+  const isOwnEbook = ebook?.writerEmail === userEmail;
 
   // load single ebook
   const fetchEbook = async () => {
@@ -67,10 +68,10 @@ export default function EbookDetailsPage() {
       return;
     }
 
-    if (ebook?.isWriter) {
-      toast.error("You cannot purchase your own ebook");
-      return;
-    }
+   if (isOwnEbook) {
+  toast.error("You cannot buy your own book");
+  return;
+}
 
     if (ebook?.hasPurchased) {
       toast.info("You already purchased this ebook");
@@ -287,30 +288,42 @@ export default function EbookDetailsPage() {
 
               {/* action buttons */}
               <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <button
-                  onClick={handlePurchase}
-                  disabled={
-                    purchaseLoading || ebook.hasPurchased || ebook.isWriter
-                  }
-                  className="flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f6f7a] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {purchaseLoading ? (
-                    <>
-                      <Loader2 size={15} className="animate-spin" />
-                      Redirecting...
-                    </>
-                  ) : ebook.hasPurchased ? (
-                    "Purchased"
-                  ) : ebook.isWriter ? (
-                    "Own Ebook"
-                  ) : (
-                    <>
-                      <ShoppingCart size={15} />
-                      Buy Now
-                    </>
-                  )}
-                </button>
-
+                {isOwnEbook ? (
+  <button
+    type="button"
+    disabled
+    className="flex items-center justify-center gap-2 rounded-xl bg-[#6f8f91] px-4 py-2.5 text-sm font-semibold text-white opacity-80"
+  >
+    You cannot buy your own book
+  </button>
+) : ebook.hasPurchased ? (
+  <button
+    type="button"
+    disabled
+    className="flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-4 py-2.5 text-sm font-semibold text-white opacity-80"
+  >
+    Purchased
+  </button>
+) : (
+  <button
+    type="button"
+    onClick={handlePurchase}
+    disabled={purchaseLoading}
+    className="flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f6f7a] disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    {purchaseLoading ? (
+      <>
+        <Loader2 size={15} className="animate-spin" />
+        Redirecting...
+      </>
+    ) : (
+      <>
+        <ShoppingCart size={15} />
+        Buy Now
+      </>
+    )}
+  </button>
+)}
                 <button
                   onClick={handleBookmark}
                   disabled={bookmarkLoading}
