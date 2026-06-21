@@ -274,7 +274,7 @@ export default function UserProfilePage() {
 
           
 
-          <div className="mt-8 rounded-3xl
+          <div className="mt-8 rounded-3xl bg-white">
             <h2 className="mb-4 text-xl font-bold text-[#053c41]">
               Quick Actions
             </h2>
