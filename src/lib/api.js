@@ -4,9 +4,9 @@ const baseUrl =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 
-// ==============================
+
 // CORE FETCH HELPERS
-// ==============================
+
 
 // public fetch
 export const serverFetch = async (path) => {
@@ -38,9 +38,9 @@ export const serverMutation = async (
 };
 
 
-// ==============================
+
 // STATUS HANDLER
-// ==============================
+
 
 const handleStatusCode = async (res) => {
   if (res.status === 401) {
@@ -67,9 +67,8 @@ const handleStatusCode = async (res) => {
 };
 
 
-// ==============================
 // BOOKMARK SYSTEM (FIXED)
-// ==============================
+
 
 // ADD BOOKMARK
 export const addBookmark = async (ebookId, email) => {

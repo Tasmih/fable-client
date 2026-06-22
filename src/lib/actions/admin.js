@@ -1,68 +1,116 @@
-// lib/action/admin.js
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const readJson = async (res, fallbackMessage) => {
+  const data = await res.json().catch(() => null);
 
-export const loadAnalyticsAction = async () => {
-  try {
-    const res = await fetch(`${API_URL}/api/admin/analytics-overview`);
-    if (!res.ok) throw new Error("failed to fetch analytics");
-    return await res.json();
-  } catch (error) {
-    console.error("action error:", error);
-    return null;
+  if (!res.ok) {
+    throw new Error(data?.message || fallbackMessage);
   }
+
+  return data;
 };
 
-export const loadUsersAction = async () => {
-  try {
-    const res = await fetch(`${API_URL}/api/users`);
-    if (!res.ok) throw new Error("failed to fetch users");
-    return await res.json();
-  } catch (error) {
-    console.error("action error:", error);
-    return [];
-  }
+export const getAdminOverview = async (adminEmail) => {
+  const res = await fetch(
+    `${API_URL}/api/admin/overview?email=${encodeURIComponent(adminEmail)}`,
+    { cache: "no-store" }
+  );
+
+  return readJson(res, "failed to load admin overview");
 };
 
-export const loadEbooksAction = async () => {
-  try {
-    const res = await fetch(`${API_URL}/api/ebooks`);
-    if (!res.ok) throw new Error("failed to fetch ebooks");
-    const data = await res.json();
-    if (data && Array.isArray(data.ebooks)) {
-      return data.ebooks;
-    } else if (Array.isArray(data)) {
-      return data;
+export const getAdminUsers = async (adminEmail) => {
+  const res = await fetch(
+    `${API_URL}/api/admin/users?email=${encodeURIComponent(adminEmail)}`,
+    { cache: "no-store" }
+  );
+
+  return readJson(res, "failed to load users");
+};
+
+export const updateAdminUserRole = async (userId, adminEmail, role) => {
+  const res = await fetch(
+    `${API_URL}/api/admin/users/${userId}/role?email=${encodeURIComponent(
+      adminEmail
+    )}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ role }),
     }
-    return [];
-  } catch (error) {
-    console.error("action error:", error);
-    return [];
-  }
+  );
+
+  return readJson(res, "failed to update user role");
 };
 
-export const changeUserRoleAction = async (userId, newRole) => {
-  const res = await fetch(`${API_URL}/api/admin/users/role/${userId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ role: newRole })
-  });
-  return res.ok;
+export const deleteAdminUser = async (userId, adminEmail) => {
+  const res = await fetch(
+    `${API_URL}/api/admin/users/${userId}?email=${encodeURIComponent(
+      adminEmail
+    )}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  return readJson(res, "failed to delete user");
 };
 
-export const toggleEbookStatusAction = async (ebookId, currentStatus) => {
-  const nextStatus = currentStatus === "Available" ? "Unpublished" : "Available";
-  const res = await fetch(`${API_URL}/api/ebooks/status/${ebookId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status: nextStatus })
-  });
-  return { ok: res.ok, nextStatus };
+export const getAdminEbooks = async (adminEmail) => {
+  const res = await fetch(
+    `${API_URL}/api/admin/ebooks?email=${encodeURIComponent(adminEmail)}`,
+    { cache: "no-store" }
+  );
+
+  return readJson(res, "failed to load ebooks");
 };
 
-export const deleteEbookAction = async (ebookId) => {
-  const res = await fetch(`${API_URL}/api/ebooks/${ebookId}`, {
-    method: "DELETE"
-  });
-  return res.ok;
+export const updateAdminEbookStatus = async (ebookId, adminEmail, status) => {
+  const res = await fetch(
+    `${API_URL}/api/admin/ebooks/${ebookId}/status?email=${encodeURIComponent(
+      adminEmail
+    )}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  return readJson(res, "failed to update ebook status");
+};
+
+export const deleteAdminEbook = async (ebookId, adminEmail) => {
+  const res = await fetch(
+    `${API_URL}/api/admin/ebooks/${ebookId}?email=${encodeURIComponent(
+      adminEmail
+    )}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  return readJson(res, "failed to delete ebook");
+};
+
+export const getAdminTransactions = async (adminEmail) => {
+  const res = await fetch(
+    `${API_URL}/api/admin/transactions?email=${encodeURIComponent(adminEmail)}`,
+    { cache: "no-store" }
+  );
+
+  return readJson(res, "failed to load transactions");
+};
+
+export const getAdminAnalytics = async (adminEmail) => {
+  const res = await fetch(
+    `${API_URL}/api/admin/analytics?email=${encodeURIComponent(adminEmail)}`,
+    { cache: "no-store" }
+  );
+
+  return readJson(res, "failed to load analytics");
 };

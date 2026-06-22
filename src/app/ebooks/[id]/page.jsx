@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import {
   ArrowLeft,
@@ -10,6 +10,7 @@ import {
   BookmarkCheck,
   CalendarDays,
   DollarSign,
+  LayoutDashboard,
   Loader2,
   Lock,
   ShoppingCart,
@@ -18,15 +19,16 @@ import {
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import {
-  getEbookById,
-  createCheckoutSession,
   addBookmark,
+  createCheckoutSession,
+  getEbookById,
   removeBookmark,
 } from "@/lib/actions/ebooks";
 
 export default function EbookDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, isPending } = useSession();
 
   const [ebook, setEbook] = useState(null);
@@ -36,10 +38,25 @@ export default function EbookDetailsPage() {
   const [error, setError] = useState("");
 
   const userEmail = session?.user?.email || "";
-  const isOwnEbook = ebook?.writerEmail === userEmail;
+  const userRole = session?.user?.role || "user";
 
-  // load single ebook
-  const fetchEbook = async () => {
+  const from = searchParams.get("from");
+  const isFromAdminEbooks = from === "admin-ebooks";
+
+  const dashboardHref =
+    userRole === "admin"
+      ? "/dashboard/admin"
+      : userRole === "writer"
+      ? "/dashboard/writer"
+      : "/dashboard/user";
+
+  const isOwnEbook =
+    ebook?.isWriter ||
+    ebook?.writerEmail?.toLowerCase() === userEmail?.toLowerCase();
+
+  const isPurchased = ebook?.hasPurchased;
+
+  const loadEbook = async () => {
     try {
       setLoading(true);
       setError("");
@@ -57,10 +74,9 @@ export default function EbookDetailsPage() {
     if (!id) return;
     if (isPending) return;
 
-    fetchEbook();
+    loadEbook();
   }, [id, userEmail, isPending]);
 
-  // buy ebook using stripe checkout
   const handlePurchase = async () => {
     if (!session?.user) {
       toast.info("Please login to purchase this ebook");
@@ -68,12 +84,12 @@ export default function EbookDetailsPage() {
       return;
     }
 
-   if (isOwnEbook) {
-  toast.error("You cannot buy your own book");
-  return;
-}
+    if (isOwnEbook) {
+      toast.error("You cannot buy your own book");
+      return;
+    }
 
-    if (ebook?.hasPurchased) {
+    if (isPurchased) {
       toast.info("You already purchased this ebook");
       return;
     }
@@ -94,7 +110,6 @@ export default function EbookDetailsPage() {
     }
   };
 
-  // add or remove bookmark
   const handleBookmark = async () => {
     if (!session?.user) {
       toast.info("Please login to bookmark this ebook");
@@ -143,7 +158,7 @@ export default function EbookDetailsPage() {
 
   if (loading || isPending) {
     return (
-      <main className="min-h-screen bg-[#f6f1ea]/50 px-4 py-8 md:px-8">
+      <main className="min-h-screen overflow-x-hidden bg-[#f6f1ea] px-4 py-6 md:px-8">
         <section className="mx-auto max-w-7xl">
           <div className="animate-pulse rounded-3xl bg-white p-6 shadow-sm md:p-8">
             <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
@@ -164,7 +179,7 @@ export default function EbookDetailsPage() {
 
   if (error) {
     return (
-      <main className="min-h-screen bg-[#f6f1ea]/50 px-4 py-8 md:px-8">
+      <main className="min-h-screen overflow-x-hidden bg-[#f6f1ea] px-4 py-6 md:px-8">
         <section className="mx-auto max-w-3xl rounded-3xl border border-red-100 bg-white p-10 text-center shadow-sm">
           <h1 className="text-2xl font-bold text-[#053c41]">
             Ebook not found
@@ -172,13 +187,36 @@ export default function EbookDetailsPage() {
 
           <p className="mt-2 text-sm text-red-500">{error}</p>
 
-          <Link
-            href="/ebooks"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#053c41] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f6f7a]"
-          >
-            <ArrowLeft size={16} />
-            Back to ebooks
-          </Link>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            {isFromAdminEbooks ? (
+              <Link
+                href="/dashboard/admin/ebooks"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#AE7C54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c99367]"
+              >
+                <ArrowLeft size={16} />
+                Ebooks
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#AE7C54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c99367]"
+              >
+                <ArrowLeft size={16} />
+                Back
+              </button>
+            )}
+
+            {session?.user && (
+              <Link
+                href={dashboardHref}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#053c41] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f6f7a]"
+              >
+                <LayoutDashboard size={16} />
+                Dashboard
+              </Link>
+            )}
+          </div>
         </section>
       </main>
     );
@@ -189,19 +227,41 @@ export default function EbookDetailsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f1ea]/50 px-4 py-8 md:px-8">
-      <section className="mx-auto max-w-7xl">
-        <Link
-          href="/ebooks"
-          className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#053c41]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#053c41] shadow-sm transition hover:border-[#AE7C54]/50 hover:bg-[#053c41] hover:text-white"
-        >
-          <ArrowLeft size={16} />
-          Back to Browse Ebooks
-        </Link>
+    <main className="min-h-screen overflow-x-hidden bg-[#f6f1ea] px-4 py-6 md:px-8">
+      <section className="mx-auto max-w-7xl overflow-x-hidden">
+        <div className="mb-5 flex flex-wrap items-center gap-3">
+          {isFromAdminEbooks ? (
+            <Link
+              href="/dashboard/admin/ebooks"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c99367]"
+            >
+              <ArrowLeft size={16} />
+              Ebooks
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c99367]"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
+          )}
+
+          {session?.user && (
+            <Link
+              href={dashboardHref}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f6f7a]"
+            >
+              <LayoutDashboard size={16} />
+              Dashboard
+            </Link>
+          )}
+        </div>
 
         <div className="rounded-3xl border border-[#053c41]/10 bg-white p-5 shadow-sm md:p-8">
           <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
-            {/* cover image */}
             <div className="rounded-2xl border border-[#053c41]/10 bg-[#f6f1ea] p-4">
               <img
                 src={
@@ -213,25 +273,24 @@ export default function EbookDetailsPage() {
               />
             </div>
 
-            {/* ebook info */}
-            <div>
+            <div className="min-w-0">
               <div className="mb-4 flex flex-wrap items-center gap-3">
                 <span
                   className={`rounded-full px-4 py-1.5 text-xs font-semibold text-white ${
-                    ebook.hasPurchased ? "bg-[#AE7C54]" : "bg-[#053c41]"
+                    isPurchased ? "bg-[#AE7C54]" : "bg-[#053c41]"
                   }`}
                 >
-                  {ebook.hasPurchased ? "Sold" : "Available"}
+                  {isPurchased ? "Sold" : "Available"}
                 </span>
 
-                {ebook.isWriter && (
+                {isOwnEbook && (
                   <span className="rounded-full bg-[#f6f1ea] px-4 py-1.5 text-xs font-semibold text-[#053c41]">
                     Your Ebook
                   </span>
                 )}
 
                 <span className="rounded-full bg-[#f6f1ea] px-4 py-1.5 text-xs font-semibold text-[#053c41]">
-                  {ebook.genre}
+                  {ebook.genre || "No Genre"}
                 </span>
               </div>
 
@@ -267,7 +326,7 @@ export default function EbookDetailsPage() {
 
                 <div className="flex items-center gap-2">
                   <Tag size={17} className="text-[#AE7C54]" />
-                  <span>Genre: {ebook.genre}</span>
+                  <span>Genre: {ebook.genre || "No Genre"}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -286,45 +345,46 @@ export default function EbookDetailsPage() {
                 </p>
               </div>
 
-              {/* action buttons */}
-              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {isOwnEbook ? (
-  <button
-    type="button"
-    disabled
-    className="flex items-center justify-center gap-2 rounded-xl bg-[#6f8f91] px-4 py-2.5 text-sm font-semibold text-white opacity-80"
-  >
-    You cannot buy your own book
-  </button>
-) : ebook.hasPurchased ? (
-  <button
-    type="button"
-    disabled
-    className="flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-4 py-2.5 text-sm font-semibold text-white opacity-80"
-  >
-    Purchased
-  </button>
-) : (
-  <button
-    type="button"
-    onClick={handlePurchase}
-    disabled={purchaseLoading}
-    className="flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f6f7a] disabled:cursor-not-allowed disabled:opacity-60"
-  >
-    {purchaseLoading ? (
-      <>
-        <Loader2 size={15} className="animate-spin" />
-        Redirecting...
-      </>
-    ) : (
-      <>
-        <ShoppingCart size={15} />
-        Buy Now
-      </>
-    )}
-  </button>
-)}
+                  <button
+                    type="button"
+                    disabled
+                    className="flex items-center justify-center rounded-xl bg-[#6f8f91] px-4 py-2.5 text-sm font-semibold text-white opacity-80"
+                  >
+                    You cannot buy your own book
+                  </button>
+                ) : isPurchased ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="flex items-center justify-center rounded-xl bg-[#053c41] px-4 py-2.5 text-sm font-semibold text-white opacity-80"
+                  >
+                    Already Purchased
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handlePurchase}
+                    disabled={purchaseLoading}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f6f7a] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {purchaseLoading ? (
+                      <>
+                        <Loader2 size={15} className="animate-spin" />
+                        Redirecting...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart size={15} />
+                        Buy Now
+                      </>
+                    )}
+                  </button>
+                )}
+
                 <button
+                  type="button"
                   onClick={handleBookmark}
                   disabled={bookmarkLoading}
                   className="flex items-center justify-center gap-2 rounded-xl border border-[#AE7C54]/40 bg-[#f6f1ea] px-4 py-2.5 text-sm font-semibold text-[#053c41] transition hover:bg-[#AE7C54] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
@@ -346,17 +406,8 @@ export default function EbookDetailsPage() {
                     </>
                   )}
                 </button>
-
-                <Link
-                  href="/ebooks"
-                  className="flex items-center justify-center gap-2 rounded-xl border border-[#053c41]/20 bg-white px-4 py-2.5 text-sm font-semibold text-[#053c41] transition hover:bg-[#053c41] hover:text-white"
-                >
-                  <ArrowLeft size={15} />
-                  Back
-                </Link>
               </div>
 
-              {/* ebook content */}
               <div className="mt-6 rounded-2xl border border-[#053c41]/10 bg-white p-5 shadow-sm">
                 <h2 className="text-xl font-bold text-[#053c41]">
                   Ebook Content
@@ -382,31 +433,52 @@ export default function EbookDetailsPage() {
                     </p>
 
                     <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                      <button
-                        onClick={handlePurchase}
-                        disabled={purchaseLoading || ebook.isWriter}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C54] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#814718] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {purchaseLoading ? (
-                          <>
-                            <Loader2 size={15} className="animate-spin" />
-                            Redirecting...
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart size={15} />
-                            Buy Now
-                          </>
-                        )}
-                      </button>
+                      {isOwnEbook ? (
+                        <button
+                          type="button"
+                          disabled
+                          className="inline-flex items-center justify-center rounded-xl bg-[#6f8f91] px-5 py-2.5 text-sm font-semibold text-white opacity-80"
+                        >
+                          You cannot buy your own book
+                        </button>
+                      ) : isPurchased ? (
+                        <button
+                          type="button"
+                          disabled
+                          className="inline-flex items-center justify-center rounded-xl bg-[#053c41] px-5 py-2.5 text-sm font-semibold text-white opacity-80"
+                        >
+                          Already Purchased
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handlePurchase}
+                          disabled={purchaseLoading}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C54] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#814718] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {purchaseLoading ? (
+                            <>
+                              <Loader2 size={15} className="animate-spin" />
+                              Redirecting...
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingCart size={15} />
+                              Buy Now
+                            </>
+                          )}
+                        </button>
+                      )}
 
-                      <Link
-                        href="/ebooks"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#053c41]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#053c41] transition hover:bg-[#053c41] hover:text-white"
-                      >
-                        <ArrowLeft size={15} />
-                        Back to Browse Ebooks
-                      </Link>
+                      {session?.user && (
+                        <Link
+                          href={dashboardHref}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f6f7a]"
+                        >
+                          <LayoutDashboard size={15} />
+                          Dashboard
+                        </Link>
+                      )}
                     </div>
                   </div>
                 )}

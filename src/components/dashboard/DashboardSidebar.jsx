@@ -9,7 +9,6 @@ import {
   Person,
   Plus,
   Power,
-  FileText,
   CreditCard,
   Persons,
   SquareChartBar,
@@ -51,121 +50,120 @@ export default function DashboardSidebar({ user }) {
   const userEmail = mergedUser?.email || "reader@fable.com";
 
   const menu = {
-user: [
-{
-name: "Overview",
-icon: House,
-href: "/dashboard/user",
-},
-{
-name: "Purchased Books",
-icon: BookOpen,
-href: "/dashboard/user/purchasedBooks",
-},
-{
-name: "Purchase History",
-icon: CreditCard,
-href: "/dashboard/user/purchaseHistory",
-},
-{
-name: "Bookmarks",
-icon: Bookmark,
-href: "/dashboard/user/bookmarks",
-},
-{
-name: "Profile",
-icon: Person,
-href: "/dashboard/user/profile",
-},
-{
-name: "Update Profile",
-icon: Person,
-href: "/dashboard/user/updateProfile",
-},
-],
+    user: [
+      {
+        name: "Overview",
+        icon: House,
+        href: "/dashboard/user",
+      },
+      {
+        name: "Purchased Books",
+        icon: BookOpen,
+        href: "/dashboard/user/purchasedBooks",
+      },
+      {
+        name: "Purchase History",
+        icon: CreditCard,
+        href: "/dashboard/user/purchaseHistory",
+      },
+      {
+        name: "Bookmarks",
+        icon: Bookmark,
+        href: "/dashboard/user/bookmarks",
+      },
+      {
+        name: "Profile",
+        icon: Person,
+        href: "/dashboard/user/profile",
+      },
+      {
+        name: "Update Profile",
+        icon: Person,
+        href: "/dashboard/user/updateProfile",
+      },
+    ],
 
-writer: [
-  {
-    name: "Overview",
-    icon: House,
-    href: "/dashboard/writer",
-  },
-  {
-    name: "Manage Ebooks",
-    icon: BookOpen,
-    href: "/dashboard/writer/manageEbooks",
-  },
-  {
-    name: "Add Ebook",
-    icon: Plus,
-    href: "/dashboard/writer/addEbook",
-  },
-  {
-    name: "Bookmarks",
-    icon: Bookmark,
-    href: "/dashboard/writer/bookmarks",
-  },
-  {
-    name: "Purchased Books",
-    icon: BookOpen,
-    href: "/dashboard/user/purchasedBooks",
-  },
-  {
-    name: "Purchase History",
-    icon: CreditCard,
-    href: "/dashboard/user/purchaseHistory",
-  },
-  {
-    name: "Sales History",
-    icon: Receipt,
-    href: "/dashboard/writer/salesHistory",
-  },
-  {
-    name: "Profile",
-    icon: Person,
-    href: "/dashboard/writer/profile",
-  },
-  {
-    name: "Update Profile",
-    icon: Person,
-    href: "/dashboard/writer/updateProfile",
-  },
-  {
-    name: "Writer Verification",
-    icon: ShieldCheck,
-    href: "/dashboard/writer/verify",
-  },
-],
+    writer: [
+      {
+        name: "Overview",
+        icon: House,
+        href: "/dashboard/writer",
+      },
+      {
+        name: "Manage Ebooks",
+        icon: BookOpen,
+        href: "/dashboard/writer/manageEbooks",
+      },
+      {
+        name: "Add Ebook",
+        icon: Plus,
+        href: "/dashboard/writer/addEbook",
+      },
+      {
+        name: "Bookmarks",
+        icon: Bookmark,
+        href: "/dashboard/writer/bookmarks",
+      },
+      {
+        name: "Purchased Books",
+        icon: BookOpen,
+        href: "/dashboard/user/purchasedBooks",
+      },
+      {
+        name: "Purchase History",
+        icon: CreditCard,
+        href: "/dashboard/user/purchaseHistory",
+      },
+      {
+        name: "Sales History",
+        icon: Receipt,
+        href: "/dashboard/writer/salesHistory",
+      },
+      {
+        name: "Profile",
+        icon: Person,
+        href: "/dashboard/writer/profile",
+      },
+      {
+        name: "Update Profile",
+        icon: Person,
+        href: "/dashboard/writer/updateProfile",
+      },
+      {
+        name: "Writer Verification",
+        icon: ShieldCheck,
+        href: "/dashboard/writer/verify",
+      },
+    ],
 
-admin: [
-{
-name: "Dashboard",
-icon: House,
-href: "/dashboard/admin",
-},
-{
-name: "Users",
-icon: Persons,
-href: "/dashboard/admin/users",
-},
-{
-name: "Ebooks",
-icon: BookOpen,
-href: "/dashboard/admin/ebooks",
-},
-{
-name: "Transactions",
-icon: CreditCard,
-href: "/dashboard/admin/transactions",
-},
-{
-name: "Analytics",
-icon: SquareChartBar,
-href: "/dashboard/admin/analytics",
-},
-],
-};
-
+    admin: [
+      {
+        name: "Dashboard",
+        icon: House,
+        href: "/dashboard/admin",
+      },
+      {
+        name: "Users",
+        icon: Persons,
+        href: "/dashboard/admin/users",
+      },
+      {
+        name: "Ebooks",
+        icon: BookOpen,
+        href: "/dashboard/admin/ebooks",
+      },
+      {
+        name: "Transactions",
+        icon: CreditCard,
+        href: "/dashboard/admin/transactions",
+      },
+      {
+        name: "Analytics",
+        icon: SquareChartBar,
+        href: "/dashboard/admin/analytics",
+      },
+    ],
+  };
 
   const items = menu[role] || menu.user;
   const roleHome = DEFAULT_ROUTES[role] || "/dashboard/user";
@@ -176,7 +174,7 @@ href: "/dashboard/admin/analytics",
   };
 
   return (
-    <aside className="flex h-screen w-72 flex-col border-r border-[#AE7C54]/20 bg-[#053c41] text-[#f6f1ea]">
+    <aside className="flex h-screen w-72 shrink-0 flex-col border-r border-[#AE7C54]/20 bg-[#053c41] text-[#f6f1ea]">
       {/* logo */}
       <div className="border-b border-[#AE7C54]/20 p-5">
         <Link href="/" className="inline-block">
@@ -263,14 +261,14 @@ href: "/dashboard/admin/analytics",
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
                 active
                   ? "bg-[#AE7C54] text-white shadow-sm"
                   : "text-[#f6f1ea] hover:bg-[#0b4f57]"
               }`}
             >
-              <Icon className="h-5 w-5" />
-              <span>{item.name}</span>
+              <Icon className="h-5 w-5 shrink-0" />
+              <span className="truncate">{item.name}</span>
             </Link>
           );
         })}
@@ -281,9 +279,9 @@ href: "/dashboard/admin/analytics",
         <button
           type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-red-200 transition hover:bg-red-500/10 hover:text-red-100"
+          className="flex w-full items-center gap-3 rounded-xl bg-[#AE7C54] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#c99367]"
         >
-          <Power className="h-5 w-5" />
+          <Power className="h-5 w-5 shrink-0 text-white" />
           <span>Logout</span>
         </button>
       </div>

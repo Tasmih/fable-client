@@ -1,60 +1,54 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import DashboardSideBar from "@/components/dashboard/DashboardSidebar";
-import Topbar from "@/components/dashboard/TopBar";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
-// Dashboard Layout (Protected + Role based UI wrapper)
+// Dashboard Layout
 export default function DashboardLayout({ children }) {
   const { data: session, isPending } = useSession();
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
 
-  // Set isClient to true once the component mounts on the browser
+  // Browser mount check
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // 🔐 Protect dashboard routes
+  // Protect dashboard routes
   useEffect(() => {
     if (isClient && !isPending && !session) {
       router.replace("/auth/signin");
     }
   }, [session, isPending, router, isClient]);
 
-  // ⏳ Loading state (Prevents hydration mismatch by matching server & initial client states)
+  // Loading spinner
   if (!isClient || isPending) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
-        <div className="h-10 w-10 border-4 border-teal-600 border-t-transparent rounded-full animate-spin" />
+      <div className="flex min-h-screen w-full items-center justify-center bg-[#f6f1ea]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#AE7C54] border-t-transparent" />
       </div>
     );
   }
 
-  // No session fallback
+  // If no session, redirect already handled
   if (!session) return null;
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-[#053c41]">
+      {/* Left Sidebar Area */}
+      <aside className="sticky top-0 h-screen shrink-0 bg-[#053c41]">
+        <DashboardSideBar user={session?.user} />
+      </aside>
 
-      {/* Sidebar */}
-      <DashboardSideBar user={session?.user} />
-
-      {/* Main Content */}
-      <div className="flex flex-col flex-1">
-
-        {/* Topbar */}
-        <Topbar user={session?.user} />
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-[1400px] mx-auto">
+      {/* Main Dashboard Content Area */}
+      <div className="min-w-0 flex-1 overflow-x-hidden bg-[#f6f1ea]">
+        <main className="min-w-0 overflow-x-hidden p-4 md:p-6">
+          <div className="mx-auto w-full max-w-[1400px] overflow-x-hidden">
             {children}
           </div>
         </main>
-
       </div>
     </div>
   );
