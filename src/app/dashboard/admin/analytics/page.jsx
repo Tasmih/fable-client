@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useSession } from "@/lib/auth-client";
@@ -38,6 +39,7 @@ const COLORS = [
 
 export default function AdminAnalyticsPage() {
   const { data: session, isPending } = useSession();
+  const router = useRouter();
 
   const [analytics, setAnalytics] = useState({
     monthlySales: [],
@@ -48,17 +50,25 @@ export default function AdminAnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   const adminEmail = session?.user?.email || "";
+  const isAdmin = session?.user?.role === "admin";
 
   const loadAnalytics = async () => {
     if (!adminEmail) {
-      setLoading(false);
-      return;
-    }
+  setLoading(false);
+  return;
+}
 
+if (!isAdmin) {
+  setLoading(false);
+  toast.error("admin access required", {
+    toastId: "admin-analytics-forbidden",
+  });
+  router.replace("/forbidden");
+  return;
+}
     try {
       setLoading(true);
-      const data = await getAdminAnalytics(adminEmail);
-
+     const data = await getAdminAnalytics();
       setAnalytics({
         monthlySales: Array.isArray(data?.monthlySales)
           ? data.monthlySales
@@ -69,7 +79,9 @@ export default function AdminAnalyticsPage() {
           : [],
       });
     } catch (err) {
-      toast.error(err.message || "failed to load analytics");
+     toast.error(err.message || "failed to load analytics", {
+  toastId: "admin-analytics-error",
+});
     } finally {
       setLoading(false);
     }
@@ -78,7 +90,8 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     if (isPending) return;
     loadAnalytics();
-  }, [isPending, adminEmail]);
+  }, [isPending, adminEmail, isAdmin ,router]);
+  
 
   const totalAnalyticsRevenue = analytics.monthlySales.reduce((sum, item) => {
     return sum + Number(item.revenue || 0);

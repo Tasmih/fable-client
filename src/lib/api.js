@@ -1,31 +1,27 @@
-import { redirect } from "next/navigation";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-const baseUrl =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
-
-
-// CORE FETCH HELPERS
-
+// core fetch helpers
 
 // public fetch
 export const serverFetch = async (path) => {
-  const res = await fetch(`${baseUrl}${path}`);
+  const res = await fetch(`${baseUrl}${path}`, {
+    cache: "no-store",
+  });
+
   return handleStatusCode(res);
 };
 
-// protected fetch (future JWT use)
+// protected fetch
 export const protectedFetch = async (path) => {
-  const res = await fetch(`${baseUrl}${path}`);
+  const res = await fetch(`${baseUrl}${path}`, {
+    cache: "no-store",
+  });
+
   return handleStatusCode(res);
 };
 
-// mutation (POST, PUT, PATCH, DELETE)
-export const serverMutation = async (
-  path,
-  data = null,
-  method = "POST"
-) => {
+// mutation
+export const serverMutation = async (path, data = null, method = "POST") => {
   const res = await fetch(`${baseUrl}${path}`, {
     method,
     headers: {
@@ -37,20 +33,8 @@ export const serverMutation = async (
   return handleStatusCode(res);
 };
 
-
-
-// STATUS HANDLER
-
-
+// status handler
 const handleStatusCode = async (res) => {
-  if (res.status === 401) {
-    redirect("/unauthorized");
-  }
-
-  if (res.status === 403) {
-    redirect("/forbidden");
-  }
-
   const contentType = res.headers.get("content-type");
 
   if (!contentType || !contentType.includes("application/json")) {
@@ -66,52 +50,43 @@ const handleStatusCode = async (res) => {
   return data;
 };
 
+// bookmark system
 
-// BOOKMARK SYSTEM (FIXED)
-
-
-// ADD BOOKMARK
+// add bookmark
 export const addBookmark = async (ebookId, email) => {
   return serverMutation(
-    `/api/ebooks/${ebookId}/bookmark`,
-    { email },
+    `/api/users/bookmark/${ebookId}?email=${encodeURIComponent(email)}`,
+    null,
     "POST"
   );
 };
 
-// REMOVE BOOKMARK
+// remove bookmark
 export const removeBookmark = async (ebookId, email) => {
   return serverMutation(
-    `/api/ebooks/${ebookId}/bookmark`,
-    { email },
+    `/api/users/bookmark/${ebookId}?email=${encodeURIComponent(email)}`,
+    null,
     "DELETE"
   );
 };
 
-// TOGGLE BOOKMARK (RECOMMENDED)
-export const toggleBookmark = async (
-  ebookId,
-  email,
-  method
-) => {
+// toggle bookmark
+export const toggleBookmark = async (ebookId, email, method) => {
   return serverMutation(
-    `/api/ebooks/${ebookId}/bookmark`,
-    { email },
+    `/api/users/bookmark/${ebookId}?email=${encodeURIComponent(email)}`,
+    null,
     method
   );
 };
 
-// GET BOOKMARKS 
+// get bookmarks
 export const getBookmarks = async (email) => {
   const res = await fetch(
-    `${baseUrl}/api/users/bookmarks?email=${email}`
+    `${baseUrl}/api/users/bookmarks?email=${encodeURIComponent(email)}`,
+    {
+      cache: "no-store",
+    }
   );
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.message || "failed to load bookmarks");
-  }
-
-  return data;
+  return handleStatusCode(res);
 };
