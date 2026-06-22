@@ -19,7 +19,7 @@ import {
 
 import { signOut, useSession } from "@/lib/auth-client";
 
-const IS_DEV = process.env.NODE_ENV === "development";
+
 
 const DEFAULT_ROUTES = {
   user: "/dashboard/user",
@@ -32,7 +32,7 @@ export default function DashboardSidebar({ user }) {
   const router = useRouter();
   const { data: session } = useSession();
 
-  const [devRole, setDevRole] = useState(null);
+  
   const [imageError, setImageError] = useState(false);
 
   const sessionUser = session?.user || {};
@@ -43,8 +43,9 @@ export default function DashboardSidebar({ user }) {
   };
 
   const actualRole = mergedUser?.role || "user";
-  const role = IS_DEV && devRole ? devRole : actualRole;
-
+  const role = actualRole;
+  
+  
   const avatarUrl = !imageError ? mergedUser?.image : null;
   const userName = mergedUser?.name || "Reader";
   const userEmail = mergedUser?.email || "reader@fable.com";
@@ -185,34 +186,7 @@ export default function DashboardSidebar({ user }) {
         </Link>
       </div>
 
-      {/* dev role switcher */}
-      {IS_DEV && (
-        <div className="border-b border-yellow-400/30 bg-yellow-500/20 px-4 py-2">
-          <p className="mb-1 text-xs text-yellow-300">
-            dev: role preview
-          </p>
-
-          <div className="flex gap-1">
-            {["user", "writer", "admin"].map((roleName) => (
-              <button
-                key={roleName}
-                type="button"
-                onClick={() => {
-                  setDevRole(roleName === actualRole ? null : roleName);
-                  router.push(DEFAULT_ROUTES[roleName]);
-                }}
-                className={`rounded px-2 py-1 text-xs capitalize transition ${
-                  role === roleName
-                    ? "bg-yellow-400 font-bold text-black"
-                    : "bg-white/10 text-white hover:bg-white/20"
-                }`}
-              >
-                {roleName}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      
 
       {/* user info */}
       <div className="flex items-center gap-3 border-b border-[#AE7C54]/20 p-5">
