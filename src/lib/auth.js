@@ -4,6 +4,7 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 
 const client = new MongoClient(process.env.MONGO_DB_URI);
 await client.connect();
+
 const db = client.db(process.env.AUTH_DB_NAME);
 
 export const auth = betterAuth({
@@ -11,7 +12,16 @@ export const auth = betterAuth({
     enabled: true,
   },
 
-  trustedOrigins: [process.env.BETTER_AUTH_URL],
+  session: {
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
+  },
+
+  trustedOrigins: [
+    process.env.BETTER_AUTH_URL,
+    process.env.NEXT_PUBLIC_CLIENT_URL,
+    "http://localhost:3000",
+  ].filter(Boolean),
 
   socialProviders: {
     google: {
@@ -23,7 +33,7 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       role: {
-        default: "reader",
+        type: "string",
         required: false,
         defaultValue: "user",
         input: true,
@@ -45,6 +55,9 @@ export const auth = betterAuth({
           } else {
             user.role = user.role || "user";
           }
+
+          user.status = user.status || "active";
+
           return user;
         },
       },

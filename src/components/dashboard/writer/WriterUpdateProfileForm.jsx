@@ -36,12 +36,20 @@ export default function WriterUpdateProfileForm({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("please select an image file");
+      toast.error("Please select an image file");
       return;
     }
 
+    const previousImage = formData.image;
+    const localPreview = URL.createObjectURL(file);
+
     try {
       setImageUploading(true);
+
+      setFormData((prev) => ({
+        ...prev,
+        image: localPreview,
+      }));
 
       const imageUrl = await uploadImageToImgBB(file);
 
@@ -50,11 +58,18 @@ export default function WriterUpdateProfileForm({
         image: imageUrl,
       }));
 
-      toast.success("profile image uploaded successfully");
+      toast.success("Image uploaded. Click Update Profile to save changes.");
     } catch (err) {
-      toast.error(err.message || "failed to upload image");
+      setFormData((prev) => ({
+        ...prev,
+        image: previousImage,
+      }));
+
+      toast.error(err.message || "Failed to upload image");
     } finally {
       setImageUploading(false);
+      event.target.value = "";
+      URL.revokeObjectURL(localPreview);
     }
   };
 
@@ -113,6 +128,7 @@ export default function WriterUpdateProfileForm({
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
+                  disabled={imageUploading}
                   className="hidden"
                 />
               </label>
@@ -180,7 +196,11 @@ export default function WriterUpdateProfileForm({
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#053c41] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0f6f7a] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <ShieldCheck className="h-4 w-4" />
-                {submitting ? "Updating..." : "Update Profile"}
+                {imageUploading
+                  ? "Uploading Image..."
+                  : submitting
+                  ? "Updating..."
+                  : "Update Profile"}
               </button>
             </div>
           </div>

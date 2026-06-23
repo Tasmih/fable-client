@@ -35,10 +35,10 @@ export default function UserProfilePage() {
   const userEmail = session?.user?.email || "";
 
   useEffect(() => {
-    if (!isPending && !session?.user) {
-      router.push("/auth/signin");
-    }
-  }, [isPending, session?.user, router]);
+  if (!isPending && !session?.user) {
+    router.push("/unauthorized");
+  }
+}, [isPending, session?.user, router]);
 
   useEffect(() => {
     if (isPending) return;

@@ -2,7 +2,7 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 
-// ➕ CREATE EBOOK
+//CREATE EBOOK
 
 export const createEbook = async (ebookData) => {
   const res = await fetch(`${API_URL}/api/ebooks`, {
@@ -23,37 +23,52 @@ export const createEbook = async (ebookData) => {
 };
 // GET ALL EBOOKS
 
-export const getEbooks = async (queryString = "") => {
-  const res = await fetch(`${API_URL}/api/ebooks?${queryString}`);
+export const getEbooks = async (filters = {}) => {
+  const params = new URLSearchParams();
 
-  const data = await res.json();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (
+      value !== undefined &&
+      value !== null &&
+      value !== "" &&
+      value !== "all"
+    ) {
+      params.append(key, value);
+    }
+  });
+
+  const query = params.toString() ? `?${params.toString()}` : "";
+
+  const res = await fetch(`${API_URL}/api/ebooks${query}`, {
+    cache: "no-store",
+  });
+
+  const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new Error(data.message || "failed to load ebooks");
+    throw new Error(data?.message || "Failed to load ebooks");
   }
 
   return data;
 };
-
 
 // GET SINGLE EBOOK
 
 export const getEbookById = async (id, email = "") => {
-  const url = email
-    ? `${API_URL}/api/ebooks/${id}?email=${encodeURIComponent(email)}`
-    : `${API_URL}/api/ebooks/${id}`;
+  const query = email ? `?email=${encodeURIComponent(email)}` : "";
 
-  const res = await fetch(url);
+  const res = await fetch(`${API_URL}/api/ebooks/${id}${query}`, {
+    cache: "no-store",
+  });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new Error(data.message || "failed to load ebook");
+    throw new Error(data?.message || "Failed to load ebook details");
   }
 
   return data;
 };
-
 
  // GET WRITER EBOOKS
 

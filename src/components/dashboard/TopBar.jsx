@@ -8,7 +8,7 @@ export default function Topbar({ user }) {
   }
 
   return (
-    <header className="h-16 bg-[#F7F5F2] border-b flex items-center justify-between px-6 text-[#1C1C1C]">
+    <header className="h-10 bg-[#F7F5F2] border-b flex items-center justify-between px-6 text-[#1C1C1C]">
 
       <div>
         <h2 className="text-lg font-semibold">

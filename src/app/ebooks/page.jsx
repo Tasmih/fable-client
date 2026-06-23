@@ -36,37 +36,37 @@ export default function BrowseEbooksPage() {
     }
   };
 
-  const fetchEbooks = async () => {
-    try {
-      setLoading(true);
-      setError("");
+ const fetchEbooks = async () => {
+  try {
+    setLoading(true);
+    setError("");
 
-      const email = getUserEmail();
+    const email = getUserEmail();
 
-      const params = new URLSearchParams();
+    const data = await getEbooks({
+      page,
+      limit: 12,
+      search,
+      genre,
+      availability,
+      sort,
+      minPrice,
+      maxPrice,
+      email,
+    });
 
-      params.append("page", page);
-      params.append("limit", 12);
-
-      if (search) params.append("search", search);
-      if (genre !== "all") params.append("genre", genre);
-      if (availability !== "all") params.append("availability", availability);
-      if (sort) params.append("sort", sort);
-      if (minPrice) params.append("minPrice", minPrice);
-      if (maxPrice) params.append("maxPrice", maxPrice);
-      if (email) params.append("email", email);
-
-      const data = await getEbooks(params.toString());
-
-      setEbooks(data.ebooks || []);
-      setPages(data.pages || 0);
-      setTotal(data.total || 0);
-    } catch (err) {
-      setError(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setEbooks(data.ebooks || []);
+    setPages(data.pages || 0);
+    setTotal(data.total || 0);
+  } catch (err) {
+    setError(err.message || "Something went wrong");
+    setEbooks([]);
+    setPages(0);
+    setTotal(0);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchEbooks();
@@ -323,17 +323,29 @@ export default function BrowseEbooksPage() {
         )}
 
         {/* empty message */}
-        {!loading && !error && ebooks.length === 0 && (
-          <div className="rounded-2xl border border-[#053c41]/10 bg-white p-10 text-center shadow-sm">
-            <h2 className="text-xl font-bold text-[#053c41]">
-              No ebooks found
-            </h2>
+{!loading && !error && ebooks.length === 0 && (
+  <div
+    id="ebooks-list"
+    className="rounded-3xl border border-[#AE7C54]/20 bg-white p-10 text-center shadow-sm"
+  >
+    <h2 className="text-2xl font-bold text-[#053c41]">
+      No ebooks match your filters
+    </h2>
 
-            <p className="mt-2 text-sm text-[#053c41]/70">
-              Try changing your search or filter options.
-            </p>
-          </div>
-        )}
+    <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#053c41]/70">
+      We could not find any ebooks for your current search, genre, price, or
+      availability filter. Try different keywords or clear all filters.
+    </p>
+
+    <button
+      type="button"
+      onClick={handleClearFilter}
+      className="mt-5 rounded-xl bg-[#AE7C54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c99367]"
+    >
+      Clear Filters
+    </button>
+  </div>
+)}
 
         {/* ebook grid */}
         {!loading && !error && ebooks.length > 0 && (

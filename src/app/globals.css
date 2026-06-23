@@ -16,3 +16,26 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* React Toastify custom theme */
+.Toastify__toast--success {
+  background: #AE7C54 !important;
+  color: #ffffff !important;
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 12px 30px rgba(5, 60, 65, 0.18) !important;
+}
+
+.Toastify__toast--success .Toastify__toast-icon svg {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+.Toastify__toast--success .Toastify__close-button {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.Toastify__progress-bar--success {
+  background: #f6f1ea !important;
+}

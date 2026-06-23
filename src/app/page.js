@@ -1,16 +1,26 @@
-import FeaturedEbooks from "@/components/FeaturedEbooks";
-import Hero from "@/components/Hero";
-import WhyChooseFable from "@/components/WhyChooseFable";
+import Hero from "@/components/home/Hero";
+import FeaturedEbooks from "@/components/home/FeaturedEbooks";
+import WhyChooseFable from "@/components/home/WhyChooseFable";
+import TopWriters from "@/components/home/TopWriters";
+import EbookGenres from "@/components/home/EbookGenres";
+import Testimonials from "@/components/home/Testimonials";
+import PlatformStats from "@/components/home/PlatformStats";
 
-import Image from "next/image";
-
-export default function Home() {
+export default function HomePage() {
   return (
-    <div >
-      <Hero/>
-      <FeaturedEbooks/>
-      <WhyChooseFable/>
-    
-    </div>
+    <main className="min-h-screen bg-[#f6f1ea]">
+      <Hero />
+
+      <FeaturedEbooks />
+
+      <WhyChooseFable />
+      <PlatformStats />
+
+      <TopWriters />
+
+      <EbookGenres />
+
+      <Testimonials />
+    </main>
   );
 }

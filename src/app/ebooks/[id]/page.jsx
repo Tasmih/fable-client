@@ -54,7 +54,7 @@ export default function EbookDetailsPage() {
     ebook?.isWriter ||
     ebook?.writerEmail?.toLowerCase() === userEmail?.toLowerCase();
 
-  const isPurchased = ebook?.hasPurchased;
+  const isPurchased = Boolean(ebook?.hasPurchased);
 
   const loadEbook = async () => {
     try {
