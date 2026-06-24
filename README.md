@@ -94,6 +94,6 @@ For security reasons, sensitive credentials such as admin access details are not
 
 Live Project
 
-Live URL: 
+Live URL: https://fable-client-zeta.vercel.app
 GitHub Repository (Client): https://github.com/Tasmih/fable-client
 GitHub Repository (Server): https://github.com/Tasmih/fable-server
